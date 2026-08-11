@@ -1,0 +1,98 @@
+import React from 'react';
+import { motion } from 'framer-motion';
+import { 
+  Home, 
+  CreditCard, 
+  BarChart3, 
+  Ticket, 
+  Bell, 
+  Settings, 
+  HelpCircle, 
+  Zap,
+  Award,
+  Users
+} from 'lucide-react';
+
+export default function DashboardSidebar({ activeTab, setActiveTab }) {
+  const menuItems = [
+    { id: 'overview', icon: Home, label: 'Overview' },
+    { id: 'wallet', icon: CreditCard, label: 'Fan Wallet' },
+    { id: 'activity', icon: BarChart3, label: 'Analytics' },
+    { id: 'tickets', icon: Ticket, label: 'Match Passes' },
+    { id: 'community', icon: Users, label: 'Fan Club' },
+  ];
+
+  const bottomItems = [
+    { id: 'settings', icon: Settings, label: 'Settings' },
+    { id: 'help', icon: HelpCircle, label: 'Help Center' },
+  ];
+
+  return (
+    <aside className="w-16 sm:w-20 bg-[#FFFDF8] border-r border-[#E4E1D8] flex flex-col items-center py-6 justify-between flex-shrink-0 z-20 shadow-warm-sm">
+      {/* App Symbol / Brand Icon */}
+      <div className="flex flex-col items-center gap-6">
+        <motion.div 
+          whileHover={{ scale: 1.1, rotate: 5 }}
+          whileTap={{ scale: 0.95 }}
+          className="w-10 h-10 rounded-2xl bg-[#20221F] text-[#F7F5EF] flex items-center justify-center font-black text-xl shadow-warm-md cursor-pointer"
+        >
+          A
+        </motion.div>
+
+        {/* Main Nav Icons */}
+        <nav className="flex flex-col items-center gap-3">
+          {menuItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = activeTab === item.id;
+            return (
+              <motion.button
+                key={item.id}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={() => setActiveTab(item.id)}
+                title={item.label}
+                className={`relative w-11 h-11 rounded-2xl flex items-center justify-center transition-all duration-200 ${
+                  isActive 
+                    ? 'bg-[#20221F] text-[#FFFDF8] shadow-warm-md' 
+                    : 'text-[#6F716B] hover:bg-[#EFEEE8] hover:text-[#20221F]'
+                }`}
+              >
+                <Icon className="w-5 h-5" />
+                {isActive && (
+                  <motion.span 
+                    layoutId="activeSidebarIndicator"
+                    className="absolute -right-1 w-1.5 h-5 bg-[#7A8B5A] rounded-full" 
+                  />
+                )}
+              </motion.button>
+            );
+          })}
+        </nav>
+      </div>
+
+      {/* Bottom Icons */}
+      <div className="flex flex-col items-center gap-3">
+        {bottomItems.map((item) => {
+          const Icon = item.icon;
+          const isActive = activeTab === item.id;
+          return (
+            <motion.button
+              key={item.id}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={() => setActiveTab(item.id)}
+              title={item.label}
+              className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-all ${
+                isActive 
+                  ? 'bg-[#20221F] text-[#FFFDF8]' 
+                  : 'text-[#6F716B] hover:bg-[#EFEEE8] hover:text-[#20221F]'
+              }`}
+            >
+              <Icon className="w-5 h-5" />
+            </motion.button>
+          );
+        })}
+      </div>
+    </aside>
+  );
+}

@@ -1,0 +1,11 @@
+{
+  "name": "clubverse-root",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "npm --prefix frontend run dev",
+    "server": "npm --prefix backend run dev",
+    "build": "npm --prefix frontend run build"
+  }
+}
