@@ -6,12 +6,18 @@ import {
   Award, 
   Settings, 
   HelpCircle,
-  ShieldCheck
+  ShieldCheck,
+  Landmark,
+  Shield,
+  Calendar
 } from 'lucide-react';
 
 export default function AdminSidebar({ activeTab, setActiveTab }) {
   const menuItems = [
     { id: 'overview', icon: Home, label: 'Overview' },
+    { id: 'teams', icon: Shield, label: 'Teams' },
+    { id: 'fixtures', icon: Calendar, label: 'Fixtures' },
+    { id: 'stadiums', icon: Landmark, label: 'Stadiums' },
     { id: 'players', icon: Users, label: 'Players' },
     { id: 'coaches', icon: Award, label: 'Coaches' },
   ];
@@ -22,7 +28,7 @@ export default function AdminSidebar({ activeTab, setActiveTab }) {
   ];
 
   return (
-    <aside className="w-16 sm:w-20 bg-[#FFFDF8] border-r border-[#E4E1D8] flex flex-col items-center py-6 justify-between flex-shrink-0 z-20 shadow-warm-sm font-sans">
+    <aside className="fixed left-0 top-0 bottom-0 w-16 sm:w-20 h-screen bg-[#FFFDF8] border-r border-[#E4E1D8] flex flex-col items-center py-6 justify-between flex-shrink-0 z-50 shadow-warm-sm overflow-y-auto font-sans">
       {/* Brand Icon / Admin Badge */}
       <div className="flex flex-col items-center gap-6">
         <motion.div 

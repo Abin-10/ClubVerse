@@ -1,20 +1,43 @@
 import mongoose from 'mongoose';
 
 const ticketSchema = new mongoose.Schema({
-  match_id: {
+  fixture_id: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Match',
-    required: [true, 'Match reference is required']
+    ref: 'Fixture',
+    required: [true, 'Fixture reference is required']
   },
   user_id: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: [true, 'User reference is required']
+    type: String,
+    required: [true, 'User ID is required']
+  },
+  user_name: {
+    type: String,
+    default: 'Guest'
+  },
+  user_email: {
+    type: String,
+    default: ''
   },
   seat_number: {
     type: String,
     required: [true, 'Seat number is required'],
-    maxlength: 20
+    maxlength: 30
+  },
+  section: {
+    type: String,
+    required: [true, 'Section is required']
+  },
+  row: {
+    type: Number,
+    required: true
+  },
+  seat: {
+    type: Number,
+    required: true
+  },
+  price: {
+    type: Number,
+    required: true
   },
   booking_date: {
     type: Date,
@@ -31,5 +54,8 @@ const ticketSchema = new mongoose.Schema({
     default: 'Booked'
   }
 });
+
+// Compound index to prevent double-booking
+ticketSchema.index({ fixture_id: 1, seat_number: 1 }, { unique: true });
 
 export default mongoose.models.Ticket || mongoose.model('Ticket', ticketSchema);

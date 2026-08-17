@@ -40,8 +40,8 @@ export function WalletView({ onOpenTopUp }) {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="p-5 rounded-2xl bg-[#F7F5EF] border border-[#E4E1D8]">
           <span className="text-xs font-bold text-[#6F716B]">Wallet Balance</span>
-          <div className="text-3xl font-black text-[#20221F] font-serif mt-1">$6,260.29</div>
-          <span className="text-[10px] text-[#7A8B5A] font-bold">+$250.00 recent deposit</span>
+          <div className="text-3xl font-black text-[#20221F] font-serif mt-1">₹6,260.29</div>
+          <span className="text-[10px] text-[#7A8B5A] font-bold">+₹250.00 recent deposit</span>
         </div>
 
         <div className="p-5 rounded-2xl bg-[#F7F5EF] border border-[#E4E1D8]">

@@ -6,6 +6,12 @@ import { connectDB } from './config/db.js';
 import User from './models/User.js';
 import Player from './models/Player.js';
 import Coach from './models/Coach.js';
+import StadiumBooking from './models/StadiumBooking.js';
+import Stadium from './models/Stadium.js';
+import Team from './models/Team.js';
+import Fixture from './models/Fixture.js';
+import Ticket from './models/Ticket.js';
+import CommunityPost from './models/CommunityPost.js';
 
 dotenv.config();
 
@@ -1201,6 +1207,847 @@ app.post('/api/auth/setup-password', async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({ message: err.message || 'Failed to set password.' });
+  }
+});
+
+// --- STADIUM BOOKING API ENDPOINTS ---
+
+// --- STADIUM BOOKING API ENDPOINTS ---
+
+const INITIAL_SEED_BOOKINGS = [
+  {
+    stadium_id: "apex-central",
+    stadium_name: "Apex Central Arena",
+    stadium_image: "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=1200&auto=format&fit=crop&q=80",
+    location: "London, UK • East End District",
+    user_id: "guest",
+    user_name: "Alexander Wright",
+    user_email: "alexander.wright@clubverse.com",
+    user_phone: "+44 7700 900077",
+    team_name: "ClubVerse Fan XI",
+    special_notes: "Request main gate entry pass.",
+    booking_date: "2026-08-15",
+    match_title: "ClubVerse FC vs Northern Derby",
+    selected_seats: ["Block A (Row 1, Seat 4)", "Block A (Row 1, Seat 5)"],
+    total_seats: 2,
+    hourly_rate: 250,
+    total_price: 145,
+    payment_method: "Fan Wallet Balance",
+    payment_status: "Paid",
+    booking_status: "Confirmed"
+  }
+];
+
+// Get all stadium bookings (optionally filter by user_id or stadium_id)
+app.get('/api/stadium-bookings', async (req, res) => {
+  try {
+    const { user_id, stadium_id, status } = req.query;
+    let query = {};
+    if (user_id) query.user_id = user_id;
+    if (stadium_id) query.stadium_id = stadium_id;
+    if (status) query.booking_status = status;
+
+    let bookings = await StadiumBooking.find(query).sort({ created_at: -1 });
+    if (bookings.length === 0 && !user_id && !stadium_id && !status) {
+      bookings = await StadiumBooking.insertMany(INITIAL_SEED_BOOKINGS);
+      console.log('✅ Seeded initial stadium bookings collection in MongoDB.');
+    }
+    res.json({ success: true, bookings });
+  } catch (err) {
+    res.status(500).json({ message: err.message || 'Failed to fetch stadium bookings.' });
+  }
+});
+
+// Create a new stadium booking (saved directly to MongoDB)
+app.post('/api/stadium-bookings', async (req, res) => {
+  try {
+    const { 
+      stadium_id, 
+      stadium_name, 
+      stadium_image, 
+      location, 
+      user_id, 
+      user_name, 
+      user_email, 
+      user_phone, 
+      team_name, 
+      special_notes, 
+      booking_date, 
+      match_title,
+      selected_seats,
+      total_seats,
+      time_slot, 
+      duration_hours, 
+      hourly_rate, 
+      total_price, 
+      payment_method 
+    } = req.body;
+
+    if (!stadium_id || !booking_date || !user_name || !user_email || !total_price) {
+      return res.status(400).json({ message: 'Missing required booking fields.' });
+    }
+
+    const booking = await StadiumBooking.create({
+      stadium_id,
+      stadium_name,
+      stadium_image: stadium_image || '',
+      location: location || '',
+      user_id: user_id || 'guest',
+      user_name,
+      user_email,
+      user_phone: user_phone || '',
+      team_name: team_name || '',
+      special_notes: special_notes || '',
+      booking_date,
+      match_title: match_title || 'ClubVerse Matchday',
+      selected_seats: Array.isArray(selected_seats) ? selected_seats : [],
+      total_seats: total_seats || (selected_seats ? selected_seats.length : 1),
+      time_slot: time_slot || 'Matchday Session',
+      duration_hours: duration_hours || 2,
+      hourly_rate: hourly_rate || 150,
+      total_price: Number(total_price),
+      payment_method: payment_method || 'Fan Wallet Balance',
+      payment_status: 'Paid',
+      booking_status: 'Pending' // Requires Admin Approval
+    });
+
+    res.status(201).json({ success: true, booking, message: 'Stadium booking request submitted for Admin approval!' });
+  } catch (err) {
+    res.status(500).json({ message: err.message || 'Failed to process stadium booking.' });
+  }
+});
+
+// ADMIN ENDPOINT: Update Booking Status (Accept / Approve or Reject)
+app.patch('/api/stadium-bookings/:id/status', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body; // 'Confirmed' (Accepted), 'Rejected', 'Completed'
+
+    if (!['Pending', 'Confirmed', 'Rejected', 'Completed', 'Cancelled'].includes(status)) {
+      return res.status(400).json({ message: 'Invalid booking status.' });
+    }
+
+    const booking = await StadiumBooking.findById(id);
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking record not found.' });
+    }
+
+    booking.booking_status = status;
+    await booking.save();
+
+    res.json({ success: true, booking, message: `Booking status updated to ${status}.` });
+  } catch (err) {
+    res.status(500).json({ message: err.message || 'Failed to update booking status.' });
+  }
+});
+
+// Cancel a stadium booking (Fan action)
+app.patch('/api/stadium-bookings/:id/cancel', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const booking = await StadiumBooking.findById(id);
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking record not found.' });
+    }
+
+    booking.booking_status = 'Cancelled';
+    await booking.save();
+
+    res.json({ success: true, booking, message: 'Booking has been cancelled.' });
+  } catch (err) {
+    res.status(500).json({ message: err.message || 'Failed to cancel booking.' });
+  }
+});
+
+// --- STADIUM MANAGEMENT API ENDPOINTS (ADMIN & FAN) ---
+
+// Initial seed data for stadiums
+const DEFAULT_SEED_STADIUMS = [
+  {
+    name: "Campnow",
+    location: "London, UK • East End District",
+    capacity: "250 Seats • 11v11 FIFA Pitch",
+    price_per_hour: 5000,
+    availability_status: "Available",
+    image: "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=1200&auto=format&fit=crop&q=80",
+    gallery: [
+      "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=1200&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1522778119026-d647f0596c20?w=1200&auto=format&fit=crop&q=80"
+    ],
+    pitch_type: "Hybrid Desso GrassMaster",
+    dimensions: "105m x 68m (UEFA Standard)",
+    description: "The flagship stadium of ClubVerse FC featuring state-of-the-art hybrid grass pitch, 50 VIP seats, 120 pitchside seats, and 80 outer stand seats.",
+    facilities: [
+      "250 Total Seats Capacity",
+      "50 VIP Platinum Seats",
+      "120 Pitchside Seats (4x30)",
+      "80 Outer Stand Seats (4x20)",
+      "FIFA Certified Hybrid Turf",
+      "4K Floodlight System",
+      "Press & Media Center"
+    ],
+    blocked_dates: [],
+    seating_tiers: [
+      { name: 'VIP Seats', price: 5000, seats_info: '50 Seats (25 North / 25 South)', total_seats: 50 },
+      { name: '4 Side Prime', price: 3000, seats_info: '30 Seats Each Side (Total 120 Seats)', total_seats: 120 },
+      { name: '4 Side Regular', price: 1000, seats_info: '20 Seats Each Side (Total 80 Seats)', total_seats: 80 }
+    ],
+    rating: 4.9,
+    reviews_count: 128
+  },
+  {
+    name: "Metropolis Olympic Arena",
+    location: "Manchester, UK • Sports City Hub",
+    capacity: "250 Seats • Convertible Pitch",
+    price_per_hour: 3000,
+    availability_status: "Available",
+    image: "https://images.unsplash.com/photo-1522778119026-d647f0596c20?w=1200&auto=format&fit=crop&q=80",
+    gallery: [
+      "https://images.unsplash.com/photo-1522778119026-d647f0596c20?w=1200&auto=format&fit=crop&q=80"
+    ],
+    pitch_type: "Shock-Absorbing 4G Synthetic",
+    dimensions: "100m x 64m",
+    description: "A futuristic 250-seat stadium venue equipped with shock-absorbing synthetic turf and digital scoreboards.",
+    facilities: [
+      "250 Seats Circular Arena",
+      "Shock-Absorbing 4G Turf",
+      "Indoor Warmup Facility",
+      "Digital HD Scoreboard",
+      "4 Team Dressing Rooms"
+    ],
+    blocked_dates: [],
+    seating_tiers: [
+      { name: 'VIP Seats', price: 5000, seats_info: '50 Seats (25 North / 25 South)', total_seats: 50 },
+      { name: '4 Side Prime', price: 3000, seats_info: '30 Seats Each Side (Total 120 Seats)', total_seats: 120 },
+      { name: '4 Side Regular', price: 1000, seats_info: '20 Seats Each Side (Total 80 Seats)', total_seats: 80 }
+    ],
+    rating: 4.8,
+    reviews_count: 94
+  }
+];
+
+// GET all stadiums (auto-seeds defaults if collection is empty, normalizes 1000->250)
+app.get('/api/stadiums', async (req, res) => {
+  try {
+    let stadiums = await Stadium.find().sort({ created_at: -1 });
+    if (stadiums.length === 0) {
+      stadiums = await Stadium.insertMany(DEFAULT_SEED_STADIUMS);
+      console.log('✅ Seeded initial stadium collection in MongoDB.');
+    } else {
+      // Normalize any older 1000 seats records & ensure seating_tiers exist
+      let updatedAny = false;
+      for (let s of stadiums) {
+        let changed = false;
+        if (!s.capacity || s.capacity.includes('1,000') || s.capacity.includes('1000')) {
+          s.capacity = '250 Seats';
+          changed = true;
+        }
+        if (!s.seating_tiers || s.seating_tiers.length === 0) {
+          s.seating_tiers = [
+            { name: 'VIP Seats', price: 5000, seats_info: '50 Seats (25 North / 25 South)', total_seats: 50 },
+            { name: '4 Side Prime', price: 3000, seats_info: '30 Seats Each Side (Total 120 Seats)', total_seats: 120 },
+            { name: '4 Side Regular', price: 1000, seats_info: '20 Seats Each Side (Total 80 Seats)', total_seats: 80 }
+          ];
+          changed = true;
+        }
+        if (changed) {
+          await s.save();
+          updatedAny = true;
+        }
+      }
+      if (updatedAny) {
+        stadiums = await Stadium.find().sort({ created_at: -1 });
+      }
+    }
+    res.json({ success: true, stadiums });
+  } catch (err) {
+    res.status(500).json({ message: err.message || 'Failed to fetch stadiums.' });
+  }
+});
+
+// POST create new stadium (Admin)
+app.post('/api/stadiums', async (req, res) => {
+  try {
+    const { 
+      name, 
+      location, 
+      capacity, 
+      price_per_hour, 
+      availability_status, 
+      image, 
+      gallery, 
+      description, 
+      pitch_type, 
+      dimensions, 
+      facilities,
+      blocked_dates,
+      seating_tiers
+    } = req.body;
+
+    if (!name || !location) {
+      return res.status(400).json({ message: 'Stadium Name and Location are required.' });
+    }
+
+    const defaultTiers = [
+      { name: 'VIP Seats', price: 5000, seats_info: '50 Seats (25 North / 25 South)', total_seats: 50 },
+      { name: '4 Side Prime', price: 3000, seats_info: '30 Seats Each Side (Total 120 Seats)', total_seats: 120 },
+      { name: '4 Side Regular', price: 1000, seats_info: '20 Seats Each Side (Total 80 Seats)', total_seats: 80 }
+    ];
+
+    const newStadium = await Stadium.create({
+      name,
+      location,
+      capacity: capacity && !capacity.includes('1,000') ? capacity : '250 Seats',
+      price_per_hour: Number(price_per_hour) || 0,
+      availability_status: availability_status || 'Available',
+      image: image || 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=1200&auto=format&fit=crop&q=80',
+      gallery: Array.isArray(gallery) ? gallery : [],
+      description: description || '',
+      pitch_type: pitch_type || 'FIFA Certified Hybrid Grass',
+      dimensions: dimensions || '105m x 68m (UEFA Standard)',
+      facilities: Array.isArray(facilities) ? facilities : ['Floodlight System', 'Dressing Locker Rooms'],
+      blocked_dates: Array.isArray(blocked_dates) ? blocked_dates : [],
+      seating_tiers: Array.isArray(seating_tiers) && seating_tiers.length > 0 ? seating_tiers : defaultTiers
+    });
+
+    res.status(201).json({ success: true, stadium: newStadium, message: 'Stadium created successfully!' });
+  } catch (err) {
+    res.status(500).json({ message: err.message || 'Failed to create stadium.' });
+  }
+});
+
+// PUT update existing stadium (Admin)
+app.put('/api/stadiums/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const stadium = await Stadium.findById(id);
+    if (!stadium) {
+      return res.status(404).json({ message: 'Stadium not found.' });
+    }
+
+    const updates = req.body;
+    Object.assign(stadium, updates);
+    if (updates.seating_tiers) {
+      stadium.markModified('seating_tiers');
+    }
+    await stadium.save();
+
+    res.json({ success: true, stadium, message: 'Stadium updated successfully!' });
+  } catch (err) {
+    res.status(500).json({ message: err.message || 'Failed to update stadium.' });
+  }
+});
+
+// DELETE stadium (Admin)
+app.delete('/api/stadiums/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deleted = await Stadium.findByIdAndDelete(id);
+    if (!deleted) {
+      return res.status(404).json({ message: 'Stadium not found.' });
+    }
+    res.json({ success: true, message: 'Stadium deleted successfully!' });
+  } catch (err) {
+    res.status(500).json({ message: err.message || 'Failed to delete stadium.' });
+  }
+});
+
+// ============================================================
+// TEAM MANAGEMENT ROUTES (Admin — Max 10 Teams)
+// ============================================================
+
+const DEFAULT_TEAMS = [
+  { name: 'ClubVerse FC', short_name: 'CVFC', logo_color: '#EF4444', logo_url: 'https://images.unsplash.com/photo-1614632537190-23e4146777db?w=200&auto=format&fit=crop&q=80' },
+  { name: 'Manchester City', short_name: 'MCY', logo_color: '#06B6D4', logo_url: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=200&auto=format&fit=crop&q=80' },
+  { name: 'Real Madrid', short_name: 'RMA', logo_color: '#EAB308', logo_url: 'https://images.unsplash.com/photo-1522778119026-d647f0596c20?w=200&auto=format&fit=crop&q=80' },
+  { name: 'FC Barcelona', short_name: 'BAR', logo_color: '#EF4444', logo_url: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=200&auto=format&fit=crop&q=80' },
+  { name: 'Arsenal FC', short_name: 'ARS', logo_color: '#DC2626', logo_url: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=200&auto=format&fit=crop&q=80' }
+];
+
+// GET all teams (auto-seeds defaults if empty)
+app.get('/api/teams', async (req, res) => {
+  try {
+    let teams = await Team.find().sort({ created_at: -1 });
+    if (teams.length === 0) {
+      teams = await Team.insertMany(DEFAULT_TEAMS);
+      console.log('✅ Seeded initial teams in MongoDB.');
+    }
+    res.json(teams);
+  } catch (err) {
+    res.status(500).json({ message: err.message || 'Failed to fetch teams.' });
+  }
+});
+
+// POST create team (max 10 enforced)
+app.post('/api/teams', async (req, res) => {
+  try {
+    const { name, short_name, logo_color, logo_url } = req.body;
+    if (!name || !short_name) {
+      return res.status(400).json({ message: 'Team name and short name are required.' });
+    }
+
+    const count = await Team.countDocuments();
+    if (count >= 10) {
+      return res.status(400).json({ message: 'Maximum of 10 teams allowed. Delete a team before adding a new one.' });
+    }
+
+    const existing = await Team.findOne({ name: { $regex: new RegExp(`^${name.trim()}$`, 'i') } });
+    if (existing) {
+      return res.status(400).json({ message: 'A team with this name already exists.' });
+    }
+
+    const team = await Team.create({
+      name: name.trim(),
+      short_name: short_name.trim().toUpperCase().slice(0, 4),
+      logo_color: logo_color || '#3B82F6',
+      logo_url: logo_url || ''
+    });
+
+    res.status(201).json({ success: true, team, message: 'Team created successfully!' });
+  } catch (err) {
+    res.status(500).json({ message: err.message || 'Failed to create team.' });
+  }
+});
+
+// PUT update team
+app.put('/api/teams/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const team = await Team.findById(id);
+    if (!team) return res.status(404).json({ message: 'Team not found.' });
+
+    const { name, short_name, logo_color, logo_url } = req.body;
+    if (name) team.name = name.trim();
+    if (short_name) team.short_name = short_name.trim().toUpperCase().slice(0, 4);
+    if (logo_color) team.logo_color = logo_color;
+    if (logo_url !== undefined) team.logo_url = logo_url;
+    await team.save();
+
+    res.json({ success: true, team, message: 'Team updated successfully!' });
+  } catch (err) {
+    res.status(500).json({ message: err.message || 'Failed to update team.' });
+  }
+});
+
+// DELETE team
+app.delete('/api/teams/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deleted = await Team.findByIdAndDelete(id);
+    if (!deleted) return res.status(404).json({ message: 'Team not found.' });
+    res.json({ success: true, message: 'Team deleted successfully!' });
+  } catch (err) {
+    res.status(500).json({ message: err.message || 'Failed to delete team.' });
+  }
+});
+
+// ============================================================
+// FIXTURE MANAGEMENT ROUTES (Admin)
+// ============================================================
+
+// Helper to auto-seed initial fixtures if empty
+async function ensureDefaultFixtures() {
+  // Fetch real stadium from DB created by admin (e.g. Campnow)
+  const firstStadium = await Stadium.findOne();
+  const dbStadiumName = firstStadium ? firstStadium.name : 'Campnow';
+
+  let fixtures = await Fixture.find();
+  if (fixtures.length === 0) {
+    let teams = await Team.find();
+    if (teams.length < 2) {
+      teams = await Team.insertMany(DEFAULT_TEAMS);
+    }
+    const home = teams[0]?._id;
+    const away1 = teams[1]?._id || teams[0]?._id;
+    const away2 = teams[2]?._id || teams[1]?._id || teams[0]?._id;
+    if (home && away1) {
+      await Fixture.insertMany([
+        {
+          home_team: home,
+          away_team: away1,
+          match_date: new Date(Date.now() + 86400000 * 3),
+          match_time: '20:00 GMT',
+          venue: dbStadiumName,
+          status: 'Upcoming'
+        },
+        {
+          home_team: home,
+          away_team: away2,
+          match_date: new Date(Date.now() + 86400000 * 10),
+          match_time: '17:30 GMT',
+          venue: dbStadiumName,
+          status: 'Upcoming'
+        }
+      ]);
+      console.log('✅ Seeded initial fixtures in MongoDB with venue:', dbStadiumName);
+    }
+  } else {
+    // Normalize any existing seeded fixtures to use the admin created stadium in DB (e.g. Campnow)
+    for (let f of fixtures) {
+      if (!f.venue || f.venue === 'Apex Central Arena' || f.venue === 'ClubVerse Arena') {
+        f.venue = dbStadiumName;
+        await f.save();
+      }
+    }
+  }
+}
+
+// GET all fixtures (populated with team data from MongoDB DB)
+app.get('/api/fixtures', async (req, res) => {
+  try {
+    await ensureDefaultFixtures();
+    const fixtures = await Fixture.find()
+      .populate('home_team', 'name short_name logo_color logo_url')
+      .populate('away_team', 'name short_name logo_color logo_url')
+      .sort({ match_date: 1 });
+    res.json(fixtures);
+  } catch (err) {
+    res.status(500).json({ message: err.message || 'Failed to fetch fixtures.' });
+  }
+});
+
+// GET upcoming fixtures only (fetches admin-added fixtures from MongoDB DB)
+app.get('/api/fixtures/upcoming', async (req, res) => {
+  try {
+    await ensureDefaultFixtures();
+    const fixtures = await Fixture.find({ status: { $ne: 'Completed' } })
+      .populate('home_team', 'name short_name logo_color logo_url')
+      .populate('away_team', 'name short_name logo_color logo_url')
+      .sort({ match_date: 1 });
+    res.json(fixtures);
+  } catch (err) {
+    res.status(500).json({ message: err.message || 'Failed to fetch upcoming fixtures.' });
+  }
+});
+
+// POST create fixture
+app.post('/api/fixtures', async (req, res) => {
+  try {
+    const { home_team, away_team, match_date, match_time, venue } = req.body;
+    if (!home_team || !away_team || !match_date || !match_time) {
+      return res.status(400).json({ message: 'Home team, away team, match date, and match time are required.' });
+    }
+    if (home_team === away_team) {
+      return res.status(400).json({ message: 'Home and away teams must be different.' });
+    }
+
+    const fixture = await Fixture.create({
+      home_team,
+      away_team,
+      match_date: new Date(match_date),
+      match_time,
+      venue: venue || 'ClubVerse Arena'
+    });
+
+    const populated = await Fixture.findById(fixture._id)
+      .populate('home_team', 'name short_name logo_color logo_url')
+      .populate('away_team', 'name short_name logo_color logo_url');
+
+    res.status(201).json({ success: true, fixture: populated, message: 'Fixture created successfully!' });
+  } catch (err) {
+    res.status(500).json({ message: err.message || 'Failed to create fixture.' });
+  }
+});
+
+// PUT update fixture
+app.put('/api/fixtures/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const fixture = await Fixture.findById(id);
+    if (!fixture) return res.status(404).json({ message: 'Fixture not found.' });
+
+    const { home_team, away_team, match_date, match_time, venue, status, home_score, away_score } = req.body;
+    if (home_team) fixture.home_team = home_team;
+    if (away_team) fixture.away_team = away_team;
+    if (match_date) fixture.match_date = new Date(match_date);
+    if (match_time) fixture.match_time = match_time;
+    if (venue) fixture.venue = venue;
+    if (status) fixture.status = status;
+    if (home_score !== undefined) fixture.home_score = home_score;
+    if (away_score !== undefined) fixture.away_score = away_score;
+
+    if (fixture.home_team.toString() === fixture.away_team.toString()) {
+      return res.status(400).json({ message: 'Home and away teams must be different.' });
+    }
+
+    await fixture.save();
+    const populated = await Fixture.findById(id)
+      .populate('home_team', 'name short_name logo_color logo_url')
+      .populate('away_team', 'name short_name logo_color logo_url');
+
+    res.json({ success: true, fixture: populated, message: 'Fixture updated successfully!' });
+  } catch (err) {
+    res.status(500).json({ message: err.message || 'Failed to update fixture.' });
+  }
+});
+
+// DELETE fixture
+app.delete('/api/fixtures/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deleted = await Fixture.findByIdAndDelete(id);
+    if (!deleted) return res.status(404).json({ message: 'Fixture not found.' });
+    // Also remove associated tickets
+    await Ticket.deleteMany({ fixture_id: id });
+    res.json({ success: true, message: 'Fixture and associated tickets deleted successfully!' });
+  } catch (err) {
+    res.status(500).json({ message: err.message || 'Failed to delete fixture.' });
+  }
+});
+
+// ============================================================
+// TICKET BOOKING ROUTES (Fan)
+// ============================================================
+
+// GET booked seats for a specific fixture
+app.get('/api/tickets/fixture/:fixtureId', async (req, res) => {
+  try {
+    const { fixtureId } = req.params;
+    const tickets = await Ticket.find({ fixture_id: fixtureId, ticket_status: 'Booked' })
+      .select('seat_number section row seat price user_id user_name');
+    res.json(tickets);
+  } catch (err) {
+    res.status(500).json({ message: err.message || 'Failed to fetch booked seats.' });
+  }
+});
+
+// POST book seats for a fixture
+app.post('/api/tickets/book', async (req, res) => {
+  try {
+    const { fixture_id, user_id, user_name, user_email, seats } = req.body;
+    if (!fixture_id || !user_id || !seats || !Array.isArray(seats) || seats.length === 0) {
+      return res.status(400).json({ message: 'Fixture ID, user ID, and at least one seat are required.' });
+    }
+
+    // Verify fixture exists and is upcoming
+    const fixture = await Fixture.findById(fixture_id);
+    if (!fixture) return res.status(404).json({ message: 'Fixture not found.' });
+    if (fixture.status !== 'Upcoming') {
+      return res.status(400).json({ message: 'Tickets can only be booked for upcoming fixtures.' });
+    }
+
+    // Check total seat cap (250 per fixture)
+    const existingCount = await Ticket.countDocuments({ fixture_id, ticket_status: 'Booked' });
+    if (existingCount + seats.length > 250) {
+      return res.status(400).json({ message: `Only ${250 - existingCount} seats remaining for this fixture.` });
+    }
+
+    // Check for already-booked seats
+    const seatNumbers = seats.map(s => s.seat_number);
+    const alreadyBooked = await Ticket.find({ fixture_id, seat_number: { $in: seatNumbers }, ticket_status: 'Booked' });
+    if (alreadyBooked.length > 0) {
+      const bookedLabels = alreadyBooked.map(t => t.seat_number).join(', ');
+      return res.status(400).json({ message: `Seats already booked: ${bookedLabels}` });
+    }
+
+    // Create tickets
+    const ticketDocs = seats.map(s => ({
+      fixture_id,
+      user_id,
+      user_name: user_name || 'Guest',
+      user_email: user_email || '',
+      seat_number: s.seat_number,
+      section: s.section,
+      row: s.row,
+      seat: s.seat,
+      price: s.price,
+      payment_status: 'Pending',
+      ticket_status: 'Booked'
+    }));
+
+    const created = await Ticket.insertMany(ticketDocs);
+    res.status(201).json({
+      success: true,
+      tickets: created,
+      total_price: created.reduce((sum, t) => sum + t.price, 0),
+      message: `${created.length} seat(s) booked successfully!`
+    });
+  } catch (err) {
+    if (err.code === 11000) {
+      return res.status(400).json({ message: 'One or more seats are already booked for this fixture.' });
+    }
+    res.status(500).json({ message: err.message || 'Failed to book seats.' });
+  }
+});
+
+// GET user's ticket bookings
+app.get('/api/tickets/user/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const tickets = await Ticket.find({ user_id: userId })
+      .populate({
+        path: 'fixture_id',
+        populate: [
+          { path: 'home_team', select: 'name short_name logo_color' },
+          { path: 'away_team', select: 'name short_name logo_color' }
+        ]
+      })
+      .sort({ booking_date: -1 });
+    res.json(tickets);
+  } catch (err) {
+    res.status(500).json({ message: err.message || 'Failed to fetch user tickets.' });
+  }
+});
+
+// CANCEL a ticket
+app.put('/api/tickets/:id/cancel', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const ticket = await Ticket.findById(id);
+    if (!ticket) return res.status(404).json({ message: 'Ticket not found.' });
+    await ticket.save();
+    res.json({ success: true, message: 'Ticket cancelled successfully.', ticket });
+  } catch (err) {
+    res.status(500).json({ message: err.message || 'Failed to cancel ticket.' });
+  }
+});
+// ============================================================
+// FAN COMMUNITY HUB ENDPOINTS
+// ============================================================
+
+// GET all community posts (Clean user posts only, no Marcus Vance or Elena Rostova)
+app.get('/api/community/posts', async (req, res) => {
+  try {
+    // Delete any legacy seed posts for Marcus Vance or Elena Rostova
+    await CommunityPost.deleteMany({ author_name: { $in: ['Marcus Vance', 'Elena Rostova'] } });
+
+    const posts = await CommunityPost.find().sort({ is_pinned: -1, created_at: -1 });
+    res.json({ success: true, posts });
+  } catch (err) {
+    res.status(500).json({ message: err.message || 'Failed to fetch community posts.' });
+  }
+});
+
+// CLEAR ALL community posts (Admin / Reset endpoint)
+app.delete('/api/community/posts/reset/all', async (req, res) => {
+  try {
+    await CommunityPost.deleteMany({});
+    res.json({ success: true, message: 'All community posts cleared.' });
+  } catch (err) {
+    res.status(500).json({ message: err.message || 'Failed to clear community posts.' });
+  }
+});
+
+// CREATE new community post
+app.post('/api/community/posts', async (req, res) => {
+  try {
+    const { author_id, author_name, author_avatar, author_badge, category, content, image, poll } = req.body;
+    if (!content || !content.trim()) {
+      return res.status(400).json({ message: 'Post content is required.' });
+    }
+
+    const post = await CommunityPost.create({
+      author_id: author_id || 'guest',
+      author_name: author_name || 'Anonymous Fan',
+      author_avatar: author_avatar || '',
+      author_badge: author_badge || 'Supporter Member',
+      category: category || 'General',
+      content: content.trim(),
+      image: image || '',
+      poll: poll || null
+    });
+
+    res.status(201).json({ success: true, post, message: 'Community post published successfully!' });
+  } catch (err) {
+    res.status(500).json({ message: err.message || 'Failed to publish post.' });
+  }
+});
+
+// LIKE / UNLIKE community post
+app.post('/api/community/posts/:id/like', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { user_id } = req.body;
+    const uid = user_id || 'guest';
+
+    const post = await CommunityPost.findById(id);
+    if (!post) return res.status(404).json({ message: 'Post not found.' });
+
+    const hasLiked = post.liked_by.includes(uid);
+    if (hasLiked) {
+      post.liked_by = post.liked_by.filter(u => u !== uid);
+      post.likes_count = Math.max(0, post.likes_count - 1);
+    } else {
+      post.liked_by.push(uid);
+      post.likes_count += 1;
+    }
+
+    await post.save();
+    res.json({ success: true, likes_count: post.likes_count, liked_by: post.liked_by });
+  } catch (err) {
+    res.status(500).json({ message: err.message || 'Failed to update like status.' });
+  }
+});
+
+// ADD COMMENT to community post
+app.post('/api/community/posts/:id/comment', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { author_id, author_name, author_avatar, content } = req.body;
+
+    if (!content || !content.trim()) {
+      return res.status(400).json({ message: 'Comment text is required.' });
+    }
+
+    const post = await CommunityPost.findById(id);
+    if (!post) return res.status(404).json({ message: 'Post not found.' });
+
+    const newComment = {
+      author_id: author_id || 'guest',
+      author_name: author_name || 'ClubVerse Fan',
+      author_avatar: author_avatar || '',
+      content: content.trim(),
+      created_at: new Date()
+    };
+
+    post.comments.push(newComment);
+    await post.save();
+
+    res.status(201).json({ success: true, comments: post.comments, comment: newComment });
+  } catch (err) {
+    res.status(500).json({ message: err.message || 'Failed to add comment.' });
+  }
+});
+
+// VOTE in poll
+app.post('/api/community/posts/:id/vote', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { option_id, user_id } = req.body;
+    const uid = user_id || 'guest';
+
+    const post = await CommunityPost.findById(id);
+    if (!post || !post.poll) return res.status(404).json({ message: 'Poll not found.' });
+
+    if (post.poll.voted_users && post.poll.voted_users.includes(uid)) {
+      return res.status(400).json({ message: 'You have already voted in this poll.' });
+    }
+
+    const option = post.poll.options.find(o => o.id === option_id);
+    if (!option) return res.status(400).json({ message: 'Invalid option selected.' });
+
+    option.votes += 1;
+    post.poll.total_votes += 1;
+    post.poll.voted_users.push(uid);
+
+    post.markModified('poll');
+    await post.save();
+
+    res.json({ success: true, poll: post.poll });
+  } catch (err) {
+    res.status(500).json({ message: err.message || 'Failed to record vote.' });
+  }
+});
+
+// DELETE community post
+app.delete('/api/community/posts/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deleted = await CommunityPost.findByIdAndDelete(id);
+    if (!deleted) return res.status(404).json({ message: 'Post not found.' });
+    res.json({ success: true, message: 'Community post deleted.' });
+  } catch (err) {
+    res.status(500).json({ message: err.message || 'Failed to delete post.' });
   }
 });
 

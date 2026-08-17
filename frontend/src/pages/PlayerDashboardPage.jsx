@@ -79,7 +79,7 @@ export default function PlayerDashboardPage() {
       <PlayerSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
 
       {/* Main Right Content Canvas */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 pl-16 sm:pl-20">
         
         {/* Header */}
         <PlayerHeader 

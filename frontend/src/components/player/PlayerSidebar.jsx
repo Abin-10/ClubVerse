@@ -27,7 +27,7 @@ export default function PlayerSidebar({ activeTab, setActiveTab }) {
   ];
 
   return (
-    <aside className="w-16 sm:w-20 bg-[#FFFDF8] border-r border-[#E4E1D8] flex flex-col items-center py-6 justify-between flex-shrink-0 z-20 shadow-warm-sm font-sans">
+    <aside className="fixed left-0 top-0 bottom-0 w-16 sm:w-20 h-screen bg-[#FFFDF8] border-r border-[#E4E1D8] flex flex-col items-center py-6 justify-between flex-shrink-0 z-50 shadow-warm-sm overflow-y-auto font-sans">
       {/* Brand Icon / Player Badge */}
       <div className="flex flex-col items-center gap-6">
         <motion.div 

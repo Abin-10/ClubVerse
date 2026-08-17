@@ -265,45 +265,45 @@ export const GALLERY_ITEMS = [
 export const TICKET_TIERS = [
   {
     id: "tier-fan",
-    name: "Fan Zone Tier",
-    stand: "South Stand (Lower)",
-    price: 45,
+    name: "Outer Stand Silver",
+    stand: "Outer Stand (4 Sides - 20 Seats Each)",
+    price: 1000,
     features: [
+      "80 total seats across 4 outer sides",
       "Vibrant supporters atmosphere",
       "Digital mobile pass entry",
       "10% discount on club merchandise",
-      "Access to general concourse",
     ],
     popular: false,
-    badge: "Best Value",
+    badge: "Best Value (₹1,000)",
   },
   {
     id: "tier-main",
-    name: "Main Stand Premium",
-    stand: "West Stand (Midfield)",
-    price: 95,
+    name: "Pitchside Gold",
+    stand: "Adjacent to Pitch (4 Sides - 30 Seats Each)",
+    price: 3000,
     features: [
-      "Prime center-line midfield view",
+      "120 total seats adjacent to pitch",
+      "Prime field-level touchline view",
       "Padded seats & extra legroom",
       "Fast-track priority gate access",
-      "Complimentary match program",
     ],
     popular: true,
-    badge: "Most Popular",
+    badge: "Most Popular (₹3,000)",
   },
   {
     id: "tier-vip",
-    name: "VIP Hospitality Lounge",
-    stand: "Executive Suite Tier",
-    price: 220,
+    name: "VIP Platinum Suite",
+    stand: "Inner Pitch Ring (50 VIP Seats)",
+    price: 5000,
     features: [
+      "50 exclusive VIP seats",
       "All-inclusive gourmet dining & drinks",
       "Post-match player meet & greet",
-      "Reserved stadium parking bay",
       "VIP padded balcony seating",
     ],
     popular: false,
-    badge: "Premium Experience",
+    badge: "Premium Experience (₹5,000)",
   },
 ];
 
@@ -318,8 +318,9 @@ export const AI_PROMPTS = [
 export const AI_KNOWLEDGE_BASE = {
   tactics: "ClubVerse FC plays an aggressive 4-3-3 high-pressing system under manager Alex Vance. Key focus: fast wing transitions, high defensive line led by Lucas Vance, and overload in midfield through Mateo Silva.",
   sterling: "Marcus Sterling (#9) has scored 24 goals and provided 12 assists in 28 matches this season, maintaining an impressive 9.2 average rating.",
-  tickets: "You can book tickets directly through the Ticket Booking section on this page! Choose between Fan Zone ($45), Main Stand Premium ($95), or VIP Hospitality ($220).",
+  tickets: "You can book tickets directly through the Ticket Booking section! Our 250-seat stadium features 50 VIP seats (₹5,000), 120 Pitchside seats across 4 sides (₹3,000), and 80 Outer Stand seats across 4 sides (₹1,000).",
   results: "Recent results: 3-1 Win vs Chelsea, 2-1 Win vs PSG in Champions League, and 2-2 Draw vs Juventus.",
   manager: "ClubVerse FC is managed by tactical strategist Alex Vance, who brought 18 major honors and an 84% win rate to Apex Arena.",
   default: "I am the ClubVerse AI Assistant! I can help you with squad tactics, player statistics, ticket purchasing, and upcoming match schedules. Ask me anything about the club!",
 };
+

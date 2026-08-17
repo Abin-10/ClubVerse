@@ -5,6 +5,9 @@ import AdminHeader from '../components/admin/AdminHeader';
 import AdminOverviewView from '../components/admin/AdminOverviewView';
 import PlayerManagementView from '../components/admin/PlayerManagementView';
 import CoachManagementView from '../components/admin/CoachManagementView';
+import StadiumManagementView from '../components/admin/StadiumManagementView';
+import TeamManagementView from '../components/admin/TeamManagementView';
+import FixtureManagementView from '../components/admin/FixtureManagementView';
 import PlayerModal from '../components/admin/PlayerModal';
 import CoachModal from '../components/admin/CoachModal';
 import DeleteConfirmModal from '../components/admin/DeleteConfirmModal';
@@ -228,7 +231,7 @@ export default function AdminDashboardPage() {
       <AdminSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
 
       {/* Main Right Content Canvas */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 pl-16 sm:pl-20">
         
         {/* Header */}
         <AdminHeader 
@@ -292,6 +295,42 @@ export default function AdminDashboardPage() {
                   onEditCoach={handleOpenEditCoach}
                   onDeleteCoach={handleOpenDeleteCoach}
                 />
+              </motion.div>
+            )}
+
+            {/* TEAMS TAB */}
+            {activeTab === 'teams' && (
+              <motion.div
+                key="teams"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+              >
+                <TeamManagementView triggerToast={triggerToast} />
+              </motion.div>
+            )}
+
+            {/* FIXTURES TAB */}
+            {activeTab === 'fixtures' && (
+              <motion.div
+                key="fixtures"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+              >
+                <FixtureManagementView triggerToast={triggerToast} />
+              </motion.div>
+            )}
+
+            {/* STADIUMS TAB */}
+            {activeTab === 'stadiums' && (
+              <motion.div
+                key="stadiums"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+              >
+                <StadiumManagementView triggerToast={triggerToast} />
               </motion.div>
             )}
 

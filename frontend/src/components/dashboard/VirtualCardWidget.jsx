@@ -44,16 +44,16 @@ export default function VirtualCardWidget() {
             <span className="text-xs text-[#6F716B] font-medium">Total Balance</span>
             <div className="flex items-baseline gap-2">
               <span className="font-extrabold text-3xl text-[#20221F] font-serif">
-                ${balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                ₹{balance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
               </span>
-              <span className="text-xs text-[#7A8B5A] font-bold">+$200.00</span>
+              <span className="text-xs text-[#7A8B5A] font-bold">+₹200.00</span>
             </div>
           </div>
 
           {/* Asset Split Breakdown Progress */}
           <div className="space-y-2 bg-[#F7F5EF] p-3.5 rounded-2xl border border-[#E4E1D8]">
             <div className="flex items-center justify-between text-xs font-bold">
-              <span className="text-[#20221F]">Dollar <span className="text-[#6F716B] font-normal">72%</span></span>
+              <span className="text-[#20221F]">Rupee <span className="text-[#6F716B] font-normal">72%</span></span>
               <span className="text-[#20221F]">Tether <span className="text-[#6F716B] font-normal">28%</span></span>
             </div>
             <div className="w-full h-2.5 bg-[#EFEEE8] rounded-full overflow-hidden flex">
@@ -108,7 +108,7 @@ export default function VirtualCardWidget() {
             <div className="z-10 my-auto">
               <span className="text-[10px] text-[#047857] font-bold uppercase tracking-wider">Fan Card Balance</span>
               <div className="text-2xl font-black text-[#064E3B] font-serif">
-                $390.00
+                ₹390.00
               </div>
             </div>
 
@@ -150,7 +150,7 @@ export default function VirtualCardWidget() {
 
               <form onSubmit={handleTopUpSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-[#20221F] mb-1">Enter Amount ($)</label>
+                  <label className="block text-xs font-bold text-[#20221F] mb-1">Enter Amount (₹)</label>
                   <input 
                     type="number" 
                     value={topUpAmount}
@@ -172,7 +172,7 @@ export default function VirtualCardWidget() {
                           : 'bg-[#F7F5EF] border-[#E4E1D8] text-[#20221F]'
                       }`}
                     >
-                      +${amt}
+                      +₹{amt}
                     </button>
                   ))}
                 </div>

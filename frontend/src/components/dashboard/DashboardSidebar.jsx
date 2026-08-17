@@ -10,15 +10,15 @@ import {
   HelpCircle, 
   Zap,
   Award,
-  Users
+  Users,
+  Landmark,
+  TicketCheck
 } from 'lucide-react';
 
 export default function DashboardSidebar({ activeTab, setActiveTab }) {
   const menuItems = [
     { id: 'overview', icon: Home, label: 'Overview' },
-    { id: 'wallet', icon: CreditCard, label: 'Fan Wallet' },
-    { id: 'activity', icon: BarChart3, label: 'Analytics' },
-    { id: 'tickets', icon: Ticket, label: 'Match Passes' },
+    { id: 'booktickets', icon: TicketCheck, label: 'Book Tickets' },
     { id: 'community', icon: Users, label: 'Fan Club' },
   ];
 
@@ -28,7 +28,7 @@ export default function DashboardSidebar({ activeTab, setActiveTab }) {
   ];
 
   return (
-    <aside className="w-16 sm:w-20 bg-[#FFFDF8] border-r border-[#E4E1D8] flex flex-col items-center py-6 justify-between flex-shrink-0 z-20 shadow-warm-sm">
+    <aside className="fixed left-0 top-0 bottom-0 w-16 sm:w-20 h-screen bg-[#FFFDF8] border-r border-[#E4E1D8] flex flex-col items-center py-6 justify-between flex-shrink-0 z-50 shadow-warm-sm overflow-y-auto">
       {/* App Symbol / Brand Icon */}
       <div className="flex flex-col items-center gap-6">
         <motion.div 

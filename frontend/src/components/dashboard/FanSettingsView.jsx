@@ -17,8 +17,26 @@ import {
   KeyRound,
   Phone,
   Mail,
-  Heart
+  Heart,
+  X
 } from 'lucide-react';
+
+const PASSWORD_RULES = [
+  { id: 'length',  label: 'At least 8 characters',           test: (p) => p.length >= 8 },
+  { id: 'upper',   label: 'At least one uppercase letter (A–Z)', test: (p) => /[A-Z]/.test(p) },
+  { id: 'lower',   label: 'At least one lowercase letter (a–z)', test: (p) => /[a-z]/.test(p) },
+  { id: 'number',  label: 'At least one number (0–9)',        test: (p) => /[0-9]/.test(p) },
+  { id: 'special', label: 'At least one special character (!@#$…)', test: (p) => /[^A-Za-z0-9]/.test(p) },
+];
+
+function getPasswordStrength(password) {
+  const passed = PASSWORD_RULES.filter((r) => r.test(password)).length;
+  if (passed === 0) return { score: 0, label: '', color: '' };
+  if (passed <= 2)  return { score: 1, label: 'Weak',      color: '#EF4444' };
+  if (passed === 3) return { score: 2, label: 'Fair',      color: '#F59E0B' };
+  if (passed === 4) return { score: 3, label: 'Strong',    color: '#7A8B5A' };
+  return               { score: 4, label: 'Very Strong', color: '#16A34A' };
+}
 
 export default function FanSettingsView({ currentUser, onUpdateUserData, triggerToast, isAdmin = false }) {
   const isUserAdmin = isAdmin || currentUser?.role === 'Admin' || currentUser?.role === 'admin';
@@ -58,10 +76,11 @@ export default function FanSettingsView({ currentUser, onUpdateUserData, trigger
     if (user) {
       setName(user.name || user.full_name || '');
       setEmail(user.email || '');
-      setPhone(user.phone || '');
+      const rawPhone = user.phone || '';
+      setPhone(rawPhone.startsWith('+1') || rawPhone.startsWith('+44') || !rawPhone ? '+91 98765 43210' : rawPhone);
       setBio(user.bio || 'Passionate ClubVerse VIP Supporter ⚽');
       setFavoritePlayer(user.favorite_player || 'Marcus Rashford');
-      setProfileImage(user.profile_image || avatarPresets[0]);
+      setProfileImage(user.profile_image || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&auto=format&fit=crop&q=80');
     }
   }, [currentUser]);
 
@@ -169,14 +188,17 @@ export default function FanSettingsView({ currentUser, onUpdateUserData, trigger
     setPassSuccessMsg('');
     setPassErrorMsg('');
 
-    if (newPassword !== confirmPassword) {
-      setPassErrorMsg('New password and confirm password do not match.');
+    const ruleResults = PASSWORD_RULES.map((r) => ({ ...r, passed: r.test(newPassword) }));
+    const allRulesPassed = ruleResults.every((r) => r.passed);
+
+    if (!allRulesPassed) {
+      setPassErrorMsg('New password must meet all 5 security requirements below (8+ chars, uppercase, lowercase, number, special character).');
       setIsUpdatingPassword(false);
       return;
     }
 
-    if (newPassword.length < 6) {
-      setPassErrorMsg('New password must be at least 6 characters long.');
+    if (newPassword !== confirmPassword) {
+      setPassErrorMsg('New password and confirm password do not match.');
       setIsUpdatingPassword(false);
       return;
     }
@@ -240,8 +262,7 @@ export default function FanSettingsView({ currentUser, onUpdateUserData, trigger
         {[
           { id: 'profile', label: 'Profile & Avatar', icon: User },
           { id: 'security', label: 'Password & Security', icon: Lock },
-          { id: 'notifications', label: 'Notifications', icon: Bell },
-          ...(!isUserAdmin ? [{ id: 'membership', label: 'Pass Tier', icon: ShieldCheck }] : []),
+          { id: 'notifications', label: 'Notifications', icon: Bell }
         ].map((tab) => {
           const Icon = tab.icon;
           const isActive = activeSubTab === tab.id;
@@ -308,25 +329,11 @@ export default function FanSettingsView({ currentUser, onUpdateUserData, trigger
                 />
               </div>
 
-              {/* Avatar Quick Presets & Upload Info */}
-              <div className="space-y-2 text-center sm:text-left flex-1">
-                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                  <span className="text-xs text-[#6F716B] font-bold">Pick preset:</span>
-                  {avatarPresets.map((preset, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => handleSelectPreset(preset)}
-                      className={`w-8 h-8 rounded-full overflow-hidden border-2 transition-all ${
-                        profileImage === preset ? 'border-[#7A8B5A] scale-110' : 'border-transparent opacity-70 hover:opacity-100'
-                      }`}
-                    >
-                      <img src={preset} alt={`Preset ${idx + 1}`} className="w-full h-full object-cover" />
-                    </button>
-                  ))}
-                </div>
+              {/* Avatar Upload Info */}
+              <div className="space-y-1 text-center sm:text-left flex-1">
+                <p className="text-xs font-black text-[#20221F]">Upload Profile Picture</p>
                 <p className="text-[11px] text-[#6F716B]">
-                  Click the camera icon to upload your own picture, or pick a preset above. Max size 5MB.
+                  Click the camera icon on your picture to upload your custom avatar. Max file size 5MB.
                 </p>
               </div>
 
@@ -366,7 +373,7 @@ export default function FanSettingsView({ currentUser, onUpdateUserData, trigger
               </div>
             </div>
 
-            {/* Phone Number */}
+            {/* Phone Number (Indian Format) */}
             <div className={isUserAdmin ? "sm:col-span-2" : ""}>
               <label className="block text-xs font-bold text-[#20221F] mb-1">Phone Number</label>
               <div className="relative">
@@ -376,7 +383,7 @@ export default function FanSettingsView({ currentUser, onUpdateUserData, trigger
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   className="w-full pl-9 pr-4 py-2.5 rounded-2xl border border-[#E4E1D8] bg-[#F7F5EF] text-xs font-bold text-[#20221F] focus:outline-none focus:ring-2 focus:ring-[#7A8B5A]"
-                  placeholder="+1 (555) 000-0000"
+                  placeholder="+91 98765 43210"
                 />
               </div>
             </div>
@@ -489,7 +496,7 @@ export default function FanSettingsView({ currentUser, onUpdateUserData, trigger
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 className="w-full pl-9 pr-10 py-2.5 rounded-2xl border border-[#E4E1D8] bg-[#F7F5EF] text-xs font-bold text-[#20221F] focus:outline-none focus:ring-2 focus:ring-[#7A8B5A]"
-                placeholder="At least 6 characters"
+                placeholder="Create a strong password"
                 required
               />
               <button 
@@ -501,6 +508,53 @@ export default function FanSettingsView({ currentUser, onUpdateUserData, trigger
               </button>
             </div>
           </div>
+
+          {/* Password Requirements Checklist & Strength Bar */}
+          {(() => {
+            const strength = getPasswordStrength(newPassword);
+            return (
+              <div className="p-4 rounded-2xl bg-[#F7F5EF] border border-[#E4E1D8] space-y-3">
+                <div className="flex items-center justify-between text-xs font-black text-[#20221F]">
+                  <span>Password Requirements</span>
+                  {newPassword.length > 0 && (
+                    <span style={{ color: strength.color }} className="font-extrabold">{strength.label}</span>
+                  )}
+                </div>
+
+                {/* Strength Meter Bar */}
+                {newPassword.length > 0 && (
+                  <div className="grid grid-cols-4 gap-1 h-1.5 rounded-full overflow-hidden bg-[#E4E1D8]">
+                    {[1, 2, 3, 4].map((step) => (
+                      <div 
+                        key={step} 
+                        className="h-full transition-all duration-300" 
+                        style={{ backgroundColor: step <= strength.score ? strength.color : '#E4E1D8' }} 
+                      />
+                    ))}
+                  </div>
+                )}
+
+                {/* 5 Rules Checklist */}
+                <div className="space-y-1.5 pt-1">
+                  {PASSWORD_RULES.map((r) => {
+                    const isPassed = r.test(newPassword);
+                    return (
+                      <div key={r.id} className="flex items-center gap-2 text-xs">
+                        {isPassed ? (
+                          <CheckCircle2 className="w-3.5 h-3.5 text-[#16A34A] flex-shrink-0" />
+                        ) : (
+                          <div className="w-3.5 h-3.5 rounded-full border border-[#9CA3AF] flex-shrink-0" />
+                        )}
+                        <span className={isPassed ? 'text-[#16A34A] font-bold' : 'text-[#6F716B]'}>
+                          {r.label}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
 
           <div>
             <label className="block text-xs font-bold text-[#20221F] mb-1">Confirm New Password</label>
@@ -515,6 +569,19 @@ export default function FanSettingsView({ currentUser, onUpdateUserData, trigger
                 required
               />
             </div>
+            {confirmPassword.length > 0 && (
+              <div className="mt-1.5 flex items-center gap-1.5 text-xs font-bold">
+                {newPassword === confirmPassword ? (
+                  <span className="text-[#16A34A] flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Passwords match
+                  </span>
+                ) : (
+                  <span className="text-red-500 flex items-center gap-1">
+                    <X className="w-3.5 h-3.5" /> Passwords do not match
+                  </span>
+                )}
+              </div>
+            )}
           </div>
 
           <motion.button 
@@ -551,28 +618,6 @@ export default function FanSettingsView({ currentUser, onUpdateUserData, trigger
         </div>
       )}
 
-      {/* SUB-TAB 4: MEMBERSHIP TIER */}
-      {activeSubTab === 'membership' && !isUserAdmin && (
-        <div className="p-6 rounded-3xl bg-gradient-to-br from-[#20221F] to-[#2E332B] text-white space-y-4 max-w-xl shadow-warm-lg">
-          <div className="flex items-center justify-between">
-            <span className="px-3 py-1 rounded-full bg-[#BEF264] text-[#20221F] text-[10px] font-black uppercase">
-              Active Member Tier
-            </span>
-            <span className="text-xs text-white/70 font-mono">ID: VIP-98214</span>
-          </div>
-
-          <h3 className="font-serif font-black text-2xl">ClubVerse VIP Gold Pass</h3>
-          <p className="text-xs text-white/80">
-            Enjoy full stadium privileges, complimentary matchday streams, 20% official kit discount, and priority ticket booking.
-          </p>
-
-          <div className="pt-2 flex items-center gap-3">
-            <button className="px-5 py-2.5 rounded-full bg-white text-[#20221F] text-xs font-bold hover:bg-[#BEF264] transition-colors">
-              Manage Subscription
-            </button>
-          </div>
-        </div>
-      )}
 
     </motion.div>
   );

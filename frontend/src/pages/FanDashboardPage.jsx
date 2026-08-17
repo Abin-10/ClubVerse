@@ -8,11 +8,13 @@ import SpendingChartCard from '../components/dashboard/SpendingChartCard';
 import PerksDonutCard from '../components/dashboard/PerksDonutCard';
 import FanPollWidget from '../components/dashboard/FanPollWidget';
 import FanSettingsView from '../components/dashboard/FanSettingsView';
+import StadiumBookingView from '../components/stadium/StadiumBookingView';
+import TicketBookingPage from '../components/stadium/TicketBookingPage';
+import CommunityView from '../components/community/CommunityView';
 import { 
   WalletView, 
   AnalyticsView, 
   TicketsView, 
-  CommunityView, 
   HelpView 
 } from '../components/dashboard/FanSidebarViews';
 import TicketBookingModal from '../components/modals/TicketBookingModal';
@@ -65,7 +67,7 @@ export default function FanDashboardPage() {
       <DashboardSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
 
       {/* Right Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 pl-16 sm:pl-20">
         {/* Header */}
         <DashboardHeader 
           currentUser={currentUser}
@@ -127,7 +129,7 @@ export default function FanDashboardPage() {
 
                 {/* Grid Layout - Row 2 */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6 items-stretch">
-                  {/* Widget 4: Total Spent Line Chart ($820.65) */}
+                  {/* Widget 4: Total Spent Line Chart (₹820.65) */}
                   <div className="lg:col-span-6">
                     <SpendingChartCard />
                   </div>
@@ -161,31 +163,25 @@ export default function FanDashboardPage() {
               </motion.div>
             )}
 
-            {/* TAB: FAN WALLET */}
-            {activeTab === 'wallet' && (
-              <motion.div key="wallet" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-                <WalletView onOpenTopUp={() => setIsTicketModalOpen(true)} />
+
+
+            {/* TAB: BOOK TICKETS */}
+            {activeTab === 'booktickets' && (
+              <motion.div key="booktickets" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
+                <TicketBookingPage currentUser={currentUser} triggerToast={triggerToast} />
               </motion.div>
             )}
 
-            {/* TAB: ANALYTICS */}
-            {activeTab === 'activity' && (
-              <motion.div key="activity" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-                <AnalyticsView />
-              </motion.div>
-            )}
 
-            {/* TAB: MATCH PASSES */}
-            {activeTab === 'tickets' && (
-              <motion.div key="tickets" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-                <TicketsView onOpenBooking={() => setIsTicketModalOpen(true)} />
-              </motion.div>
-            )}
+
+
+
+
 
             {/* TAB: FAN CLUB COMMUNITY */}
             {activeTab === 'community' && (
               <motion.div key="community" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-                <CommunityView />
+                <CommunityView currentUser={currentUser} triggerToast={triggerToast} />
               </motion.div>
             )}
 

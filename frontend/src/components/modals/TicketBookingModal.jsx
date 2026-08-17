@@ -97,7 +97,7 @@ export default function TicketBookingModal({ isOpen, onClose, selectedMatch, ini
                         <div className="text-[11px] text-slate-500">{t.stand}</div>
                       </div>
                       <div className="text-right">
-                        <div className="text-sm font-black text-slate-900">${t.price}</div>
+                        <div className="text-sm font-black text-slate-900">₹{t.price.toLocaleString('en-IN')}</div>
                         <div className="text-[10px] text-slate-400">/ ticket</div>
                       </div>
                     </div>
@@ -160,10 +160,10 @@ export default function TicketBookingModal({ isOpen, onClose, selectedMatch, ini
               <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
                 <div>
                   <span className="text-[10px] text-slate-400 font-semibold uppercase block">Total Due</span>
-                  <span className="text-2xl font-black text-slate-900">${totalPrice}</span>
+                  <span className="text-2xl font-black text-slate-900">₹{totalPrice.toLocaleString('en-IN')}</span>
                 </div>
                 <Button variant="primary" size="lg" icon={CreditCard} type="submit">
-                  Confirm & Pay ${totalPrice}
+                  Confirm & Pay ₹{totalPrice.toLocaleString('en-IN')}
                 </Button>
               </div>
 

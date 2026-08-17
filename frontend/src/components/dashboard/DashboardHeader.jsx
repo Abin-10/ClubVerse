@@ -21,7 +21,6 @@ import { Link, useNavigate } from 'react-router-dom';
 
 export default function DashboardHeader({ currentUser, onAddPassClick, onCreateReportClick }) {
   const navigate = useNavigate();
-  const [topTab, setTopTab] = useState('Dashboard');
   const [dateRange, setDateRange] = useState('20-27 Jan 2026');
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -40,33 +39,8 @@ export default function DashboardHeader({ currentUser, onAddPassClick, onCreateR
 
   return (
     <header className="bg-[#FFFDF8] border-b border-[#E4E1D8] px-4 lg:px-8 py-4 space-y-4 shadow-warm-sm sticky top-0 z-30 font-sans">
-      {/* Top Bar: Nav Tabs, Top Right Controls */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        
-        {/* Left Side: Top Navigation Pills */}
-        <div className="flex items-center gap-3">
-          <div className="flex items-center bg-[#EFEEE8]/70 p-1 rounded-full border border-[#E4E1D8]">
-            {['Dashboard', 'Payments', 'Reports'].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setTopTab(tab)}
-                className={`relative px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-200 ${
-                  topTab === tab 
-                    ? 'bg-[#20221F] text-[#FFFDF8] shadow-warm-sm' 
-                    : 'text-[#6F716B] hover:text-[#20221F]'
-                }`}
-              >
-                {tab}
-                {topTab === tab && (
-                  <motion.div 
-                    layoutId="topTabHighlight" 
-                    className="absolute inset-0 bg-[#20221F] rounded-full -z-10" 
-                  />
-                )}
-              </button>
-            ))}
-          </div>
-        </div>
+      {/* Top Bar: User Controls & Profile Dropdown */}
+      <div className="flex flex-wrap items-center justify-end gap-4">
 
         {/* Right Side: User Controls & Profile Dropdown with Logout */}
         <div className="flex items-center gap-3">
@@ -180,7 +154,7 @@ export default function DashboardHeader({ currentUser, onAddPassClick, onCreateR
           </h1>
         </div>
 
-        {/* Interactive Action Bar: Search, Sliders, Date Picker, Add Pass, Report */}
+        {/* Interactive Action Bar: Search, Sliders, Date Picker, Report */}
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           
           {/* Search Field */}
@@ -243,17 +217,6 @@ export default function DashboardHeader({ currentUser, onAddPassClick, onCreateR
               )}
             </AnimatePresence>
           </div>
-
-          {/* + Add Model / Pass Button */}
-          <motion.button 
-            whileHover={{ scale: 1.04 }}
-            whileTap={{ scale: 0.96 }}
-            onClick={onAddPassClick}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#EFEEE8] border border-[#E4E1D8] text-xs font-bold text-[#20221F] hover:bg-[#20221F] hover:text-white transition-all shadow-warm-sm"
-          >
-            <Plus className="w-3.5 h-3.5 text-[#7A8B5A]" />
-            <span>Add Fan Pass</span>
-          </motion.button>
 
           {/* Create a Report CTA */}
           <motion.button 

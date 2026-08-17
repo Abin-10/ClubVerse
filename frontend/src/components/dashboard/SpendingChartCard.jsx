@@ -33,7 +33,7 @@ export default function SpendingChartCard() {
           <div className="flex items-baseline gap-2 mt-1">
             <span className="text-xs text-[#6F716B]">Spent this week</span>
             <span className="font-extrabold text-2xl text-[#20221F] font-serif">
-              ${activeObj.val.toFixed(2)}
+              ₹{activeObj.val.toFixed(2)}
             </span>
           </div>
         </div>
@@ -117,7 +117,7 @@ export default function SpendingChartCard() {
           className="absolute -translate-x-1/2 bg-[#BEF264] text-[#365314] text-[10px] font-black px-2.5 py-1 rounded-full shadow-warm-sm border border-[#A3E635] flex items-center gap-1 pointer-events-none"
         >
           <span>{activeObj.label || 'SPENT'}</span>
-          <span>${activeObj.val}</span>
+          <span>₹{activeObj.val}</span>
         </motion.div>
 
         {/* Days X Axis */}

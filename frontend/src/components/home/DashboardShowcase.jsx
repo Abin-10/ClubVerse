@@ -191,7 +191,7 @@ export default function DashboardShowcase() {
 
                     <div className="py-2">
                       <span className="text-[10px] font-bold text-[#047857] uppercase">Total Balance</span>
-                      <div className="text-2xl font-black text-[#064E3B] font-serif">$6,010.29</div>
+                      <div className="text-2xl font-black text-[#064E3B] font-serif">₹6,010.29</div>
                     </div>
 
                     <div className="flex justify-between text-xs font-mono font-bold text-[#065F46]">
@@ -221,8 +221,8 @@ export default function DashboardShowcase() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="p-4 rounded-2xl bg-[#F7F5EF] border border-[#E4E1D8]">
-                      <span className="text-xs text-[#6F716B]">Available USD</span>
-                      <div className="text-2xl font-black text-[#20221F] font-serif">$4,327.40</div>
+                      <span className="text-xs text-[#6F716B]">Available INR</span>
+                      <div className="text-2xl font-black text-[#20221F] font-serif">₹4,327.40</div>
                     </div>
                     <div className="p-4 rounded-2xl bg-[#F7F5EF] border border-[#E4E1D8]">
                       <span className="text-xs text-[#6F716B]">Fan Tokens (CLUB)</span>
@@ -243,7 +243,7 @@ export default function DashboardShowcase() {
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <h4 className="font-serif font-black text-2xl text-[#20221F]">Total Spent ($820.65)</h4>
+                      <h4 className="font-serif font-black text-2xl text-[#20221F]">Total Spent (₹820.65)</h4>
                       <p className="text-xs text-[#6F716B]">Weekly breakdown across match passes and official merch</p>
                     </div>
                     <span className="text-xs font-black text-[#7A8B5A] bg-lime-100 px-3 py-1 rounded-full">+26 Assets</span>
