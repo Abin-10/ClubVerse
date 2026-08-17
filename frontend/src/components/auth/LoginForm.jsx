@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, CheckCircle2, AlertCircle, ArrowLeft, KeyRound } from 'lucide-react';
+import { isValidEmail } from '../../utils/validators';
 
 export default function LoginForm() {
   const location = useLocation();
@@ -36,7 +37,7 @@ export default function LoginForm() {
     setError('');
     
     // Validation
-    if (!email.includes('@') || !email.includes('.')) {
+    if (!isValidEmail(email)) {
       setError('Please enter a valid email address.');
       return;
     }

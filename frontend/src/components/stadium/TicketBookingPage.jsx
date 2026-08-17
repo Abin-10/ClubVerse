@@ -1,40 +1,42 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Ticket, Calendar, MapPin, Clock, Swords,
-  ChevronRight, ChevronLeft, CheckCircle2,
-  ArrowLeft, Loader2, PartyPopper, Building,
-  Sparkles, ShieldCheck, Flame, Trophy
+import { 
+  Ticket, Calendar, MapPin, Clock, Swords, 
+  ChevronRight, ChevronLeft, CheckCircle2, 
+  ArrowLeft, Loader2, PartyPopper, Building, 
+  Sparkles, ShieldCheck, Flame, Trophy, Lock 
 } from 'lucide-react';
 import CircularStadiumView from './CircularStadiumView';
+import RazorpayPaymentModal from './RazorpayPaymentModal';
+import { getTeamLogo, formatTimeTo12Hour, getBookingStatus, isPastFixture } from '../../utils/teamUtils';
 
 const API = 'http://localhost:5000/api';
 
 const DEFAULT_MOCK_FIXTURES = [
   {
     _id: 'fix-seed-1',
-    home_team: { name: 'Manchester City', short_name: 'MCY', logo_color: '#00A3E0' },
-    away_team: { name: 'ClubVerse FC', short_name: 'CVFC', logo_color: '#DC052D' },
-    match_date: '2026-08-16T20:00:00.000Z',
-    match_time: '20:00 GMT',
+    home_team: { name: 'Manchester City', short_name: 'MCY', logo_color: '#00A3E0', logo_url: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=200&auto=format&fit=crop&q=80' },
+    away_team: { name: 'ClubVerse FC', short_name: 'CVFC', logo_color: '#DC052D', logo_url: 'https://images.unsplash.com/photo-1614632537190-23e4146777db?w=200&auto=format&fit=crop&q=80' },
+    match_date: '2026-08-18T20:00:00.000Z',
+    match_time: '8:00 PM GMT',
     venue: 'Campnow',
     status: 'Upcoming'
   },
   {
     _id: 'fix-seed-2',
-    home_team: { name: 'ClubVerse FC', short_name: 'CVFC', logo_color: '#DC052D' },
-    away_team: { name: 'Real Madrid', short_name: 'RMA', logo_color: '#FEBE10' },
+    home_team: { name: 'ClubVerse FC', short_name: 'CVFC', logo_color: '#DC052D', logo_url: 'https://images.unsplash.com/photo-1614632537190-23e4146777db?w=200&auto=format&fit=crop&q=80' },
+    away_team: { name: 'Real Madrid', short_name: 'RMA', logo_color: '#FEBE10', logo_url: 'https://images.unsplash.com/photo-1522778119026-d647f0596c20?w=200&auto=format&fit=crop&q=80' },
     match_date: '2026-08-23T17:30:00.000Z',
-    match_time: '17:30 GMT',
+    match_time: '5:30 PM GMT',
     venue: 'Campnow',
     status: 'Upcoming'
   },
   {
     _id: 'fix-seed-3',
-    home_team: { name: 'FC Barcelona', short_name: 'FCB', logo_color: '#004D98' },
-    away_team: { name: 'ClubVerse FC', short_name: 'CVFC', logo_color: '#DC052D' },
+    home_team: { name: 'FC Barcelona', short_name: 'FCB', logo_color: '#004D98', logo_url: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=200&auto=format&fit=crop&q=80' },
+    away_team: { name: 'ClubVerse FC', short_name: 'CVFC', logo_color: '#DC052D', logo_url: 'https://images.unsplash.com/photo-1614632537190-23e4146777db?w=200&auto=format&fit=crop&q=80' },
     match_date: '2026-08-30T19:00:00.000Z',
-    match_time: '19:00 GMT',
+    match_time: '7:00 PM GMT',
     venue: 'Campnow',
     status: 'Upcoming'
   }
@@ -50,6 +52,52 @@ export default function TicketBookingPage({ currentUser, triggerToast }) {
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [booking, setBooking] = useState(false);
   const [bookingResult, setBookingResult] = useState(null);
+  const [showRazorpayModal, setShowRazorpayModal] = useState(false);
+
+  const handleConfirmBooking = () => {
+    if (!selectedFixture || selectedSeats.length === 0) return;
+    setShowRazorpayModal(true);
+  };
+
+  const handleRazorpayPaymentSuccess = async (paymentId, paymentMethod) => {
+    setShowRazorpayModal(false);
+    if (!selectedFixture || selectedSeats.length === 0) return;
+    const user = currentUser || { name: 'Shup', email: 'shup@gmail.com', id: 'guest-user-1' };
+
+    try {
+      setBooking(true);
+      const seatsPayload = selectedSeats.map(s => ({
+        seat_number: s.seat_number || s.id,
+        section: s.section || s.category || 'Regular',
+        row: s.row || 1,
+        seat: s.seat || 1,
+        price: s.price
+      }));
+
+      const res = await fetch(`${API}/tickets/book`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fixture_id: selectedFixture._id,
+          user_id: user.id || user._id || 'guest',
+          user_name: user.name || user.full_name || 'Guest',
+          user_email: user.email || '',
+          payment_status: 'Paid',
+          razorpay_payment_id: paymentId,
+          seats: seatsPayload
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Booking recording failed');
+      setBookingResult({ ...data, razorpay_payment_id: paymentId, payment_method: paymentMethod });
+      setStep(4);
+      triggerToast?.(`Payment Successful via Razorpay! ${data.tickets?.length || selectedSeats.length} seat(s) confirmed.`);
+    } catch (err) {
+      alert(err.message || 'Booking recording failed');
+    } finally {
+      setBooking(false);
+    }
+  };
 
   // Fetch live stadiums with seating tiers from MongoDB API
   const fetchStadiums = async () => {
@@ -79,8 +127,11 @@ export default function TicketBookingPage({ currentUser, triggerToast }) {
         if (res.ok) {
           let data = await res.json();
           if (Array.isArray(data) && data.length > 0) {
-            setFixtures(data);
-            return;
+            const valid = data.filter(f => !isPastFixture(f.match_date, f.match_time) && f.status !== 'Completed');
+            if (valid.length > 0) {
+              setFixtures(valid);
+              return;
+            }
           }
         }
         // Fallback to all fixtures if upcoming is empty
@@ -88,8 +139,11 @@ export default function TicketBookingPage({ currentUser, triggerToast }) {
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data) && data.length > 0) {
-            setFixtures(data);
-            return;
+            const valid = data.filter(f => !isPastFixture(f.match_date, f.match_time) && f.status !== 'Completed');
+            if (valid.length > 0) {
+              setFixtures(valid);
+              return;
+            }
           }
         }
         setFixtures(DEFAULT_MOCK_FIXTURES);
@@ -146,39 +200,6 @@ export default function TicketBookingPage({ currentUser, triggerToast }) {
       if (exists) return prev.filter(s => s.id !== seatData.id);
       return [...prev, seatData];
     });
-  };
-
-  const handleConfirmBooking = async () => {
-    if (!selectedFixture || selectedSeats.length === 0 || !currentUser) return;
-    try {
-      setBooking(true);
-      const res = await fetch(`${API}/tickets/book`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          fixture_id: selectedFixture._id,
-          user_id: currentUser.id || currentUser._id || 'guest',
-          user_name: currentUser.name || currentUser.full_name || 'Guest',
-          user_email: currentUser.email || '',
-          seats: selectedSeats.map(s => ({
-            seat_number: s.seat_number || s.id,
-            section: s.section || s.category || 'Regular',
-            row: s.row || 1,
-            seat: s.seat || 1,
-            price: s.price
-          }))
-        })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message);
-      setBookingResult(data);
-      setStep(4);
-      triggerToast?.(`${data.tickets?.length || selectedSeats.length} seat(s) booked successfully!`);
-    } catch (err) {
-      alert(err.message || 'Booking failed.');
-    } finally {
-      setBooking(false);
-    }
   };
 
   const totalPrice = selectedSeats.reduce((sum, s) => sum + s.price, 0);
@@ -289,6 +310,8 @@ export default function TicketBookingPage({ currentUser, triggerToast }) {
               fixtures.map((fix, i) => {
                 const homeColor = fix.home_team?.logo_color || '#00A3E0';
                 const awayColor = fix.away_team?.logo_color || '#DC052D';
+                const bookingStatus = getBookingStatus(fix.match_date, fix.match_time, fix.status);
+                const formattedTime = formatTimeTo12Hour(fix.match_time);
 
                 return (
                   <motion.div
@@ -296,11 +319,15 @@ export default function TicketBookingPage({ currentUser, triggerToast }) {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.08 }}
-                    onClick={() => handleFixtureSelect(fix)}
+                    onClick={() => bookingStatus.open && handleFixtureSelect(fix)}
                     style={{
                       background: `linear-gradient(135deg, rgba(255,253,248,0.95) 0%, rgba(247,245,239,0.9) 100%)`
                     }}
-                    className="p-6 rounded-3xl border border-[#E4E1D8] shadow-warm-md hover:shadow-warm-xl hover:border-[#7A8B5A] cursor-pointer transition-all duration-300 relative overflow-hidden group hover:-translate-y-1"
+                    className={`p-6 rounded-3xl border border-[#E4E1D8] shadow-warm-md transition-all duration-300 relative overflow-hidden group ${
+                      bookingStatus.open 
+                        ? 'hover:shadow-warm-xl hover:border-[#7A8B5A] cursor-pointer hover:-translate-y-1' 
+                        : 'opacity-90 bg-[#F9F8F3]'
+                    }`}
                   >
                     {/* Subtle Team Dual-Tone Ambient Glow Background */}
                     <div 
@@ -320,10 +347,18 @@ export default function TicketBookingPage({ currentUser, triggerToast }) {
                           Official Match Pass
                         </span>
                       </div>
-                      <div className="flex items-center gap-1.5 text-[11px] font-black text-[#22C55E]">
-                        <span className="w-2 h-2 rounded-full bg-[#22C55E] animate-pulse" />
-                        250 SEATS AVAILABLE
-                      </div>
+                      
+                      {bookingStatus.open ? (
+                        <div className="flex items-center gap-1.5 text-[11px] font-black text-[#22C55E]">
+                          <span className="w-2 h-2 rounded-full bg-[#22C55E] animate-pulse" />
+                          250 SEATS AVAILABLE
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1 text-[11px] font-black text-amber-700 bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/30">
+                          <Lock className="w-3.5 h-3.5 text-amber-600" />
+                          <span>{bookingStatus.reason}</span>
+                        </div>
+                      )}
                     </div>
 
                     {/* Central Match VS Layout */}
@@ -332,10 +367,15 @@ export default function TicketBookingPage({ currentUser, triggerToast }) {
                       {/* Home Team (Left Side) */}
                       <div className="col-span-5 flex items-center gap-4">
                         <div
-                          className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center text-white font-serif font-black text-sm sm:text-base shadow-warm-md flex-shrink-0 ring-4 ring-white"
+                          className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center overflow-hidden shadow-warm-md flex-shrink-0 ring-4 ring-white border-2 border-white/20 relative bg-white"
                           style={{ backgroundColor: homeColor }}
                         >
-                          {fix.home_team?.short_name || 'HOME'}
+                          <img
+                            src={getTeamLogo(fix.home_team)}
+                            alt={fix.home_team?.name || 'Home Team'}
+                            className="w-full h-full object-cover"
+                            onError={(e) => { e.target.style.display = 'none'; }}
+                          />
                         </div>
                         <div className="min-w-0">
                           <span className="text-[10px] font-black text-[#7A8B5A] tracking-wider uppercase block">HOME TEAM</span>
@@ -362,10 +402,15 @@ export default function TicketBookingPage({ currentUser, triggerToast }) {
                           </h3>
                         </div>
                         <div
-                          className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center text-white font-serif font-black text-sm sm:text-base shadow-warm-md flex-shrink-0 ring-4 ring-white"
+                          className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center overflow-hidden shadow-warm-md flex-shrink-0 ring-4 ring-white border-2 border-white/20 relative bg-white"
                           style={{ backgroundColor: awayColor }}
                         >
-                          {fix.away_team?.short_name || 'AWAY'}
+                          <img
+                            src={getTeamLogo(fix.away_team)}
+                            alt={fix.away_team?.name || 'Away Team'}
+                            className="w-full h-full object-cover"
+                            onError={(e) => { e.target.style.display = 'none'; }}
+                          />
                         </div>
                       </div>
 
@@ -384,7 +429,7 @@ export default function TicketBookingPage({ currentUser, triggerToast }) {
                         {/* Kickoff Time */}
                         <div className="flex items-center gap-1.5 text-xs font-bold text-[#20221F] bg-white px-3.5 py-1.5 rounded-xl border border-[#E4E1D8] shadow-warm-xs">
                           <Clock className="w-3.5 h-3.5 text-[#7A8B5A]" />
-                          {fix.match_time}
+                          {formattedTime}
                         </div>
 
                         {/* Stadium Name Badge */}
@@ -397,11 +442,17 @@ export default function TicketBookingPage({ currentUser, triggerToast }) {
                       {/* Primary Book Now Action Button */}
                       <button
                         type="button"
-                        className="px-5 py-2.5 rounded-2xl bg-[#20221F] text-white font-black text-xs uppercase tracking-wider shadow-warm-md group-hover:bg-[#7A8B5A] transition-all flex items-center gap-2"
+                        disabled={!bookingStatus.open}
+                        onClick={(e) => { e.stopPropagation(); if (bookingStatus.open) handleFixtureSelect(fix); }}
+                        className={`px-5 py-2.5 rounded-2xl font-black text-xs uppercase tracking-wider transition-all flex items-center gap-2 ${
+                          bookingStatus.open
+                            ? 'bg-[#20221F] text-white hover:bg-[#7A8B5A] shadow-warm-md cursor-pointer'
+                            : 'bg-[#E4E1D8] text-[#6F716B] cursor-not-allowed shadow-none'
+                        }`}
                       >
                         <Ticket className="w-4 h-4 text-[#BEF264]" />
-                        <span>Book Seats</span>
-                        <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                        <span>{bookingStatus.open ? 'Book Seats' : 'Booking Closed'}</span>
+                        {bookingStatus.open && <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />}
                       </button>
 
                     </div>
@@ -425,8 +476,8 @@ export default function TicketBookingPage({ currentUser, triggerToast }) {
             {/* Fixture Banner */}
             <div className="p-5 rounded-3xl bg-gradient-to-r from-[#20221F] via-[#2E332B] to-[#7A8B5A] text-white shadow-warm-md flex flex-wrap items-center justify-between gap-4 border border-white/10">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl flex items-center justify-center text-white font-serif font-black text-xs shadow-md" style={{ backgroundColor: selectedFixture.home_team?.logo_color }}>
-                  {selectedFixture.home_team?.short_name}
+                <div className="w-10 h-10 rounded-2xl flex items-center justify-center overflow-hidden text-white font-serif font-black text-xs shadow-md border border-white/20 bg-white relative" style={{ backgroundColor: selectedFixture.home_team?.logo_color }}>
+                  <img src={getTeamLogo(selectedFixture.home_team)} alt={selectedFixture.home_team?.name} className="w-full h-full object-cover" />
                 </div>
                 <div>
                   <span className="font-serif font-black text-base sm:text-lg block">
@@ -437,14 +488,14 @@ export default function TicketBookingPage({ currentUser, triggerToast }) {
                     Stadium Arena: {selectedFixture.venue || 'Campnow'}
                   </span>
                 </div>
-                <div className="w-10 h-10 rounded-2xl flex items-center justify-center text-white font-serif font-black text-xs shadow-md" style={{ backgroundColor: selectedFixture.away_team?.logo_color }}>
-                  {selectedFixture.away_team?.short_name}
+                <div className="w-10 h-10 rounded-2xl flex items-center justify-center overflow-hidden text-white font-serif font-black text-xs shadow-md border border-white/20 bg-white relative" style={{ backgroundColor: selectedFixture.away_team?.logo_color }}>
+                  <img src={getTeamLogo(selectedFixture.away_team)} alt={selectedFixture.away_team?.name} className="w-full h-full object-cover" />
                 </div>
               </div>
               
               <div className="text-right text-xs">
                 <div className="text-white/80 font-medium">{formatDate(selectedFixture.match_date)}</div>
-                <div className="font-black text-[#BEF264] text-sm">{selectedFixture.match_time}</div>
+                <div className="font-black text-[#BEF264] text-sm">{formatTimeTo12Hour(selectedFixture.match_time)}</div>
               </div>
             </div>
 
@@ -492,22 +543,22 @@ export default function TicketBookingPage({ currentUser, triggerToast }) {
               {/* Match Info Header */}
               <div className="flex items-center justify-between pb-5 border-b border-[#E4E1D8]">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-white font-serif font-black text-xs shadow-md" style={{ backgroundColor: selectedFixture?.home_team?.logo_color }}>
-                    {selectedFixture?.home_team?.short_name}
+                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center overflow-hidden text-white font-serif font-black text-xs shadow-md border border-white/20 bg-white relative" style={{ backgroundColor: selectedFixture?.home_team?.logo_color }}>
+                    <img src={getTeamLogo(selectedFixture?.home_team)} alt={selectedFixture?.home_team?.name} className="w-full h-full object-cover" />
                   </div>
                   <div>
                     <h3 className="font-serif font-black text-lg text-[#20221F]">
                       {selectedFixture?.home_team?.name} vs {selectedFixture?.away_team?.name}
                     </h3>
                     <div className="text-xs text-[#6F716B] font-medium flex items-center gap-2 mt-0.5">
-                      <span>{formatDate(selectedFixture?.match_date)} • {selectedFixture?.match_time}</span>
+                      <span>{formatDate(selectedFixture?.match_date)} • {formatTimeTo12Hour(selectedFixture?.match_time)}</span>
                       <span>•</span>
                       <span className="font-bold text-[#7A8B5A]">{selectedFixture?.venue || 'Campnow'}</span>
                     </div>
                   </div>
                 </div>
-                <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-white font-serif font-black text-xs shadow-md" style={{ backgroundColor: selectedFixture?.away_team?.logo_color }}>
-                  {selectedFixture?.away_team?.short_name}
+                <div className="w-12 h-12 rounded-2xl flex items-center justify-center overflow-hidden text-white font-serif font-black text-xs shadow-md border border-white/20 bg-white relative" style={{ backgroundColor: selectedFixture?.away_team?.logo_color }}>
+                  <img src={getTeamLogo(selectedFixture?.away_team)} alt={selectedFixture?.away_team?.name} className="w-full h-full object-cover" />
                 </div>
               </div>
 
@@ -650,6 +701,15 @@ export default function TicketBookingPage({ currentUser, triggerToast }) {
                 <span className="text-[#6F716B]">Total Amount</span>
                 <span className="font-serif font-black text-base text-[#7A8B5A]">₹{totalPrice.toLocaleString('en-IN')}</span>
               </div>
+
+              {bookingResult?.razorpay_payment_id && (
+                <div className="flex justify-between items-center text-xs pt-2 border-t border-dashed border-[#E4E1D8]">
+                  <span className="text-[#6F716B]">Razorpay Payment ID</span>
+                  <span className="font-mono font-bold text-[#7A8B5A] bg-[#7A8B5A]/10 px-2 py-0.5 rounded-md text-[11px]">
+                    {bookingResult.razorpay_payment_id}
+                  </span>
+                </div>
+              )}
             </div>
 
             <button
@@ -663,6 +723,16 @@ export default function TicketBookingPage({ currentUser, triggerToast }) {
         )}
 
       </AnimatePresence>
+
+      <RazorpayPaymentModal
+        isOpen={showRazorpayModal}
+        onClose={() => setShowRazorpayModal(false)}
+        amount={totalPrice}
+        fixture={selectedFixture}
+        seats={selectedSeats}
+        currentUser={currentUser}
+        onPaymentSuccess={handleRazorpayPaymentSuccess}
+      />
     </div>
   );
 }

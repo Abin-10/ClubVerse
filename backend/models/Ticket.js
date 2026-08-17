@@ -48,6 +48,14 @@ const ticketSchema = new mongoose.Schema({
     enum: ['Pending', 'Paid', 'Failed'],
     default: 'Pending'
   },
+  razorpay_payment_id: {
+    type: String,
+    default: ''
+  },
+  razorpay_order_id: {
+    type: String,
+    default: ''
+  },
   ticket_status: {
     type: String,
     enum: ['Booked', 'Cancelled'],

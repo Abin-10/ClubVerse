@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { isValidEmail } from '../utils/validators.js';
 
 const userSchema = new mongoose.Schema({
   full_name: {
@@ -13,7 +14,13 @@ const userSchema = new mongoose.Schema({
     unique: true,
     lowercase: true,
     trim: true,
-    maxlength: 150
+    maxlength: 150,
+    validate: {
+      validator: function(v) {
+        return isValidEmail(v);
+      },
+      message: props => `${props.value} is not a valid email address!`
+    }
   },
   password: {
     type: String,

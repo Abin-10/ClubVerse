@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import FixtureModal from './FixtureModal';
 import DeleteConfirmModal from './DeleteConfirmModal';
+import { formatTimeTo12Hour } from '../../utils/teamUtils';
 
 const API = 'http://localhost:5000/api';
 
@@ -452,7 +453,7 @@ export default function FixtureManagementView({ triggerToast }) {
 
                       <div className="flex items-center gap-1.5 bg-[#F7F5EF] px-3 py-1.5 rounded-xl border border-[#E4E1D8] font-bold text-[#20221F]">
                         <Clock className="w-3.5 h-3.5 text-[#3B82F6]" />
-                        <span>{fix.match_time}</span>
+                        <span>{formatTimeTo12Hour(fix.match_time)}</span>
                       </div>
 
                       <div className="flex items-center gap-1.5 bg-[#F7F5EF] px-3 py-1.5 rounded-xl border border-[#E4E1D8] font-bold text-[#20221F]">

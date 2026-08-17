@@ -12,6 +12,7 @@ import Team from './models/Team.js';
 import Fixture from './models/Fixture.js';
 import Ticket from './models/Ticket.js';
 import CommunityPost from './models/CommunityPost.js';
+import { isValidEmail } from './utils/validators.js';
 
 dotenv.config();
 
@@ -123,6 +124,10 @@ app.post('/api/auth/register', async (req, res) => {
 
     if (!fullName || !email || !password) {
       return res.status(400).json({ message: 'Full name, email, and password are required.' });
+    }
+
+    if (!isValidEmail(email)) {
+      return res.status(400).json({ message: 'Please enter a valid email address with a valid domain (e.g. alex@example.com).' });
     }
 
     // Check if user exists
@@ -1311,6 +1316,45 @@ app.post('/api/stadium-bookings', async (req, res) => {
       booking_status: 'Pending' // Requires Admin Approval
     });
 
+    // Send email confirmation asynchronously to fan
+    (async () => {
+      try {
+        const recipient = (user_email || '').trim() || 'soccer097711@gmail.com';
+        const transporter = await createTransporter();
+        if (transporter && recipient) {
+          const senderAddress = process.env.EMAIL_USER ? `"ClubVerse Stadiums" <${process.env.EMAIL_USER}>` : '"ClubVerse Stadiums" <no-reply@clubverse.com>';
+          await transporter.sendMail({
+            from: senderAddress,
+            to: recipient,
+            subject: `🏟️ Stadium Reservation Received: ${stadium_name || 'Campnow'}`,
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background-color: #F7F5EF; border-radius: 24px;">
+                <div style="background-color: #20221F; color: #ffffff; padding: 24px; border-radius: 20px; text-align: center;">
+                  <h1 style="font-family: Georgia, serif; margin: 0; color: #BEF264; font-size: 24px;">ClubVerse Stadiums</h1>
+                  <p style="margin: 6px 0 0 0; color: #a1a1aa; font-size: 12px; letter-spacing: 2px; text-transform: uppercase;">Reservation Request Confirmation</p>
+                </div>
+                <div style="background-color: #FFFDF8; border: 1px solid #E4E1D8; border-radius: 20px; padding: 24px; margin-top: 16px;">
+                  <h2 style="color: #20221F; margin-top: 0; font-size: 18px;">Hello ${user_name || 'Fan'},</h2>
+                  <p style="color: #6F716B; font-size: 14px;">
+                    We have received your stadium reservation request for <strong>${stadium_name || 'Stadium'}</strong>!
+                  </p>
+                  <div style="background-color: #F7F5EF; border: 1px solid #E4E1D8; border-radius: 16px; padding: 18px; margin: 16px 0; font-size: 13px; color: #6F716B;">
+                    <div>📅 <strong>Date:</strong> ${booking_date}</div>
+                    <div>🕒 <strong>Slot:</strong> ${time_slot || 'Matchday Session'}</div>
+                    <div>💰 <strong>Total Paid:</strong> ₹${Number(total_price).toLocaleString('en-IN')}</div>
+                    <div>💳 <strong>Payment Method:</strong> ${payment_method || 'Paid'}</div>
+                  </div>
+                </div>
+              </div>
+            `
+          });
+          console.log(`✉️ Stadium booking email sent to fan (${recipient})`);
+        }
+      } catch (err) {
+        console.warn('⚠️ Error sending stadium booking email:', err.message);
+      }
+    })();
+
     res.status(201).json({ success: true, booking, message: 'Stadium booking request submitted for Admin approval!' });
   } catch (err) {
     res.status(500).json({ message: err.message || 'Failed to process stadium booking.' });
@@ -1665,16 +1709,16 @@ async function ensureDefaultFixtures() {
         {
           home_team: home,
           away_team: away1,
-          match_date: new Date(Date.now() + 86400000 * 3),
-          match_time: '20:00 GMT',
+          match_date: new Date('2026-08-18T20:00:00.000Z'),
+          match_time: '8:00 PM GMT',
           venue: dbStadiumName,
           status: 'Upcoming'
         },
         {
           home_team: home,
           away_team: away2,
-          match_date: new Date(Date.now() + 86400000 * 10),
-          match_time: '17:30 GMT',
+          match_date: new Date('2026-08-23T17:30:00.000Z'),
+          match_time: '5:30 PM GMT',
           venue: dbStadiumName,
           status: 'Upcoming'
         }
@@ -1682,12 +1726,20 @@ async function ensureDefaultFixtures() {
       console.log('✅ Seeded initial fixtures in MongoDB with venue:', dbStadiumName);
     }
   } else {
-    // Normalize any existing seeded fixtures to use the admin created stadium in DB (e.g. Campnow)
+    // Normalize existing fixtures: update past seed dates to future dates and venue name
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
     for (let f of fixtures) {
       if (!f.venue || f.venue === 'Apex Central Arena' || f.venue === 'ClubVerse Arena') {
         f.venue = dbStadiumName;
-        await f.save();
       }
+      // If fixture match_date is in the past, roll it forward to future dates (Aug 18 / Aug 23)
+      if (f.match_date && new Date(f.match_date).getTime() < startOfToday.getTime() && f.status === 'Upcoming') {
+        f.match_date = new Date('2026-08-18T20:00:00.000Z');
+        f.match_time = '8:00 PM GMT';
+      }
+      await f.save();
     }
   }
 }
@@ -1714,7 +1766,17 @@ app.get('/api/fixtures/upcoming', async (req, res) => {
       .populate('home_team', 'name short_name logo_color logo_url')
       .populate('away_team', 'name short_name logo_color logo_url')
       .sort({ match_date: 1 });
-    res.json(fixtures);
+
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    // Filter out matches whose match_date is before today
+    const upcomingOnly = fixtures.filter(f => {
+      if (!f.match_date) return true;
+      return new Date(f.match_date).getTime() >= startOfToday.getTime();
+    });
+
+    res.json(upcomingOnly);
   } catch (err) {
     res.status(500).json({ message: err.message || 'Failed to fetch upcoming fixtures.' });
   }
@@ -1811,10 +1873,15 @@ app.get('/api/tickets/fixture/:fixtureId', async (req, res) => {
   }
 });
 
+// GET Razorpay key configuration
+app.get('/api/payments/razorpay-key', (req, res) => {
+  res.json({ key: process.env.RAZORPAY_KEY_ID || 'rzp_test_3ujiEJJapHR3Se' });
+});
+
 // POST book seats for a fixture
 app.post('/api/tickets/book', async (req, res) => {
   try {
-    const { fixture_id, user_id, user_name, user_email, seats } = req.body;
+    const { fixture_id, user_id, user_name, user_email, seats, payment_status, razorpay_payment_id, razorpay_order_id } = req.body;
     if (!fixture_id || !user_id || !seats || !Array.isArray(seats) || seats.length === 0) {
       return res.status(400).json({ message: 'Fixture ID, user ID, and at least one seat are required.' });
     }
@@ -1851,11 +1918,99 @@ app.post('/api/tickets/book', async (req, res) => {
       row: s.row,
       seat: s.seat,
       price: s.price,
-      payment_status: 'Pending',
+      payment_status: payment_status || 'Paid',
+      razorpay_payment_id: razorpay_payment_id || '',
+      razorpay_order_id: razorpay_order_id || '',
       ticket_status: 'Booked'
     }));
 
     const created = await Ticket.insertMany(ticketDocs);
+
+    // Send email confirmation asynchronously to fan
+    (async () => {
+      try {
+        let recipient = (user_email || '').trim();
+        if (!recipient && user_id && user_id !== 'guest') {
+          const u = await User.findById(user_id);
+          if (u && u.email) recipient = u.email;
+        }
+        if (!recipient) recipient = 'soccer097711@gmail.com';
+
+        const transporter = await createTransporter();
+        if (transporter && recipient) {
+          const matchTitle = `${fixture.home_team?.name || 'Home'} vs ${fixture.away_team?.name || 'Away'}`;
+          const formattedDate = fixture.match_date ? new Date(fixture.match_date).toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' }) : 'Upcoming Match';
+          const seatsList = created.map(t => `${t.seat_number} (${t.section || 'Regular'})`).join(', ');
+          const totalPrice = created.reduce((sum, t) => sum + t.price, 0);
+          const senderAddress = process.env.EMAIL_USER ? `"ClubVerse Ticketing" <${process.env.EMAIL_USER}>` : '"ClubVerse Ticketing" <no-reply@clubverse.com>';
+
+          await transporter.sendMail({
+            from: senderAddress,
+            to: recipient,
+            subject: `🎟️ Match Pass Confirmed: ${matchTitle}`,
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background-color: #F7F5EF; border-radius: 24px;">
+                <div style="background-color: #20221F; color: #ffffff; padding: 24px; border-radius: 20px; text-align: center;">
+                  <h1 style="font-family: Georgia, serif; margin: 0; color: #BEF264; font-size: 24px;">ClubVerse FC</h1>
+                  <p style="margin: 6px 0 0 0; color: #a1a1aa; font-size: 12px; letter-spacing: 2px; text-transform: uppercase;">Official Match Pass Confirmation</p>
+                </div>
+
+                <div style="background-color: #FFFDF8; border: 1px solid #E4E1D8; border-radius: 20px; padding: 24px; margin-top: 16px;">
+                  <h2 style="color: #20221F; margin-top: 0; font-size: 18px;">Hello ${user_name || 'Fan'},</h2>
+                  <p style="color: #6F716B; font-size: 14px; line-height: 1.5;">
+                    Your match ticket reservation has been successfully confirmed and paid! Below are your official match pass details:
+                  </p>
+
+                  <div style="background-color: #F7F5EF; border: 1px solid #E4E1D8; border-radius: 16px; padding: 18px; margin: 16px 0;">
+                    <div style="font-size: 16px; font-weight: bold; color: #20221F; margin-bottom: 8px;">
+                      ⚽ ${matchTitle}
+                    </div>
+                    <div style="font-size: 13px; color: #6F716B; margin-bottom: 6px;">
+                      📅 <strong>Date & Time:</strong> ${formattedDate} • ${fixture.match_time || '20:00 GMT'}
+                    </div>
+                    <div style="font-size: 13px; color: #6F716B; margin-bottom: 6px;">
+                      📍 <strong>Venue:</strong> ${fixture.venue || 'Campnow Stadium'}
+                    </div>
+                    <div style="font-size: 13px; color: #6F716B; margin-bottom: 6px;">
+                      🎟️ <strong>Seats Reserved:</strong> <span style="color: #20221F; font-weight: bold;">${seatsList}</span>
+                    </div>
+                    <div style="font-size: 13px; color: #6F716B;">
+                      💰 <strong>Total Amount Paid:</strong> <span style="color: #7A8B5A; font-weight: bold; font-size: 15px;">₹${totalPrice.toLocaleString('en-IN')}</span>
+                    </div>
+                  </div>
+
+                  ${razorpay_payment_id ? `
+                    <div style="background-color: #20221F; color: #ffffff; padding: 12px 18px; border-radius: 12px; font-size: 12px; font-family: monospace; display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                      <span>Razorpay Payment ID:</span>
+                      <strong style="color: #BEF264;">${razorpay_payment_id}</strong>
+                    </div>
+                  ` : ''}
+
+                  <div style="padding: 16px; border: 2px dashed #7A8B5A; border-radius: 16px; text-align: center; background-color: rgba(122, 139, 90, 0.05);">
+                    <span style="font-size: 11px; color: #7A8B5A; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; display: block;">Digital Stadium Entry Pass Code</span>
+                    <div style="font-family: monospace; font-size: 20px; font-weight: bold; color: #20221F; letter-spacing: 4px; margin-top: 4px;">
+                      CV-${created[0]._id.toString().substring(18).toUpperCase()}
+                    </div>
+                  </div>
+
+                  <p style="color: #6F716B; font-size: 12px; margin-top: 20px; text-align: center;">
+                    Show this digital pass code on your mobile device at stadium entry turnstiles.
+                  </p>
+                </div>
+
+                <div style="text-align: center; margin-top: 20px; color: #a1a1aa; font-size: 11px;">
+                  © 2026 ClubVerse FC • Spotify Arena Platform • All rights reserved
+                </div>
+              </div>
+            `
+          });
+          console.log(`✉️ Match booking confirmation email sent to fan (${recipient})`);
+        }
+      } catch (emailErr) {
+        console.warn('⚠️ Error sending match ticket email:', emailErr.message);
+      }
+    })();
+
     res.status(201).json({
       success: true,
       tickets: created,
@@ -1878,8 +2033,8 @@ app.get('/api/tickets/user/:userId', async (req, res) => {
       .populate({
         path: 'fixture_id',
         populate: [
-          { path: 'home_team', select: 'name short_name logo_color' },
-          { path: 'away_team', select: 'name short_name logo_color' }
+          { path: 'home_team', select: 'name short_name logo_color logo_url' },
+          { path: 'away_team', select: 'name short_name logo_color logo_url' }
         ]
       })
       .sort({ booking_date: -1 });

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Calendar, Clock, MapPin, Swords, Sparkles, Trophy } from 'lucide-react';
+import { formatTimeTo12Hour } from '../../utils/teamUtils';
 
 const getTeamLogo = (team) => {
   if (team?.logo_url) return team.logo_url;
@@ -75,7 +76,8 @@ export default function FixtureModal({ isOpen, onClose, onSave, fixtureToEdit, t
     }
     onSave({
       ...(fixtureToEdit ? { _id: fixtureToEdit._id } : {}),
-      ...form
+      ...form,
+      match_time: formatTimeTo12Hour(form.match_time)
     });
   };
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Award, User, Mail, Phone, Briefcase, Calendar, Image as ImageIcon, AlertCircle, Upload, Camera } from 'lucide-react';
+import { isValidEmail } from '../../utils/validators';
 
 export default function CoachModal({ isOpen, onClose, onSave, coachToEdit }) {
   const [fullName, setFullName] = useState('');

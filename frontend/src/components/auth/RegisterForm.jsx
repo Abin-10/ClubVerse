@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { User, Mail, Lock, Eye, EyeOff, CheckCircle2, AlertCircle, ShieldCheck, X } from 'lucide-react';
+import { isValidEmail } from '../../utils/validators';
 
 // Password strength rules (Exact same validation as Player/Coach Setup Password)
 const RULES = [
@@ -65,7 +66,7 @@ export default function RegisterForm() {
       case 'email':
         if (!value.trim()) {
           err = 'Email address is required.';
-        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())) {
+        } else if (!isValidEmail(value.trim())) {
           err = 'Please enter a valid email address (e.g. alex@example.com).';
         }
         break;

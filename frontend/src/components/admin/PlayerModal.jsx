@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, User, Mail, Shield, Phone, Calendar, Hash, Image as ImageIcon, AlertCircle, CheckCircle2, Upload, Camera } from 'lucide-react';
+import { isValidEmail } from '../../utils/validators';
 
 export default function PlayerModal({ isOpen, onClose, onSave, playerToEdit }) {
   const [fullName, setFullName] = useState('');
@@ -93,7 +94,7 @@ export default function PlayerModal({ isOpen, onClose, onSave, playerToEdit }) {
       else if (val.trim().length < 2) err = 'Name must be at least 2 characters.';
     }
     if (field === 'email' && val.trim()) {
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val.trim())) err = 'Invalid email address.';
+      if (!isValidEmail(val.trim())) err = 'Invalid email address.';
     }
     if (field === 'position') {
       if (!val) err = 'Playing position is required.';
