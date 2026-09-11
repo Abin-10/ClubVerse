@@ -2,16 +2,25 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SlidersHorizontal, Plus, ArrowUpRight, CheckCircle2, Shield, CreditCard as CardIcon, X } from 'lucide-react';
 
-export default function VirtualCardWidget() {
-  const [balance, setBalance] = useState(6010.29);
+export default function VirtualCardWidget({ walletData, onTopUp }) {
   const [showTopUpModal, setShowTopUpModal] = useState(false);
   const [topUpAmount, setTopUpAmount] = useState('500');
+
+  const totalBalance = walletData?.total_balance ?? 6010.29;
+  const recentTopUp = walletData?.recent_topup ?? 200.00;
+  const rupeePct = walletData?.rupee_percentage ?? 72;
+  const tetherPct = walletData?.tether_percentage ?? 28;
+  const cardBalance = walletData?.card_balance ?? 390.00;
+  const cardNumber = walletData?.card_number ?? '5802';
+  const cardExpiry = walletData?.card_expiry ?? '09/28';
 
   const handleTopUpSubmit = (e) => {
     e.preventDefault();
     const val = parseFloat(topUpAmount);
     if (!isNaN(val) && val > 0) {
-      setBalance(prev => prev + val);
+      if (onTopUp) {
+        onTopUp(val);
+      }
       setShowTopUpModal(false);
     }
   };
@@ -44,21 +53,21 @@ export default function VirtualCardWidget() {
             <span className="text-xs text-[#6F716B] font-medium">Total Balance</span>
             <div className="flex items-baseline gap-2">
               <span className="font-extrabold text-3xl text-[#20221F] font-serif">
-                ₹{balance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                ₹{totalBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
               </span>
-              <span className="text-xs text-[#7A8B5A] font-bold">+₹200.00</span>
+              <span className="text-xs text-[#7A8B5A] font-bold">+₹{recentTopUp.toFixed(2)}</span>
             </div>
           </div>
 
           {/* Asset Split Breakdown Progress */}
           <div className="space-y-2 bg-[#F7F5EF] p-3.5 rounded-2xl border border-[#E4E1D8]">
             <div className="flex items-center justify-between text-xs font-bold">
-              <span className="text-[#20221F]">Rupee <span className="text-[#6F716B] font-normal">72%</span></span>
-              <span className="text-[#20221F]">Tether <span className="text-[#6F716B] font-normal">28%</span></span>
+              <span className="text-[#20221F]">Rupee <span className="text-[#6F716B] font-normal">{rupeePct}%</span></span>
+              <span className="text-[#20221F]">Tether <span className="text-[#6F716B] font-normal">{tetherPct}%</span></span>
             </div>
             <div className="w-full h-2.5 bg-[#EFEEE8] rounded-full overflow-hidden flex">
-              <div className="h-full bg-[#7A8B5A] rounded-l-full w-[72%]" />
-              <div className="h-full bg-[#B08D57] rounded-r-full w-[28%]" />
+              <div className="h-full bg-[#7A8B5A] rounded-l-full" style={{ width: `${rupeePct}%` }} />
+              <div className="h-full bg-[#B08D57] rounded-r-full" style={{ width: `${tetherPct}%` }} />
             </div>
           </div>
 
@@ -108,14 +117,14 @@ export default function VirtualCardWidget() {
             <div className="z-10 my-auto">
               <span className="text-[10px] text-[#047857] font-bold uppercase tracking-wider">Fan Card Balance</span>
               <div className="text-2xl font-black text-[#064E3B] font-serif">
-                ₹390.00
+                ₹{cardBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
               </div>
             </div>
 
             {/* Bottom Row: Card Details */}
             <div className="flex items-center justify-between z-10 text-[11px] font-mono font-bold text-[#065F46]">
-              <span>•••• 5802</span>
-              <span>09/28</span>
+              <span>•••• {cardNumber}</span>
+              <span>{cardExpiry}</span>
             </div>
           </motion.div>
         </div>

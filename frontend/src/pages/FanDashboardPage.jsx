@@ -11,6 +11,7 @@ import FanSettingsView from '../components/dashboard/FanSettingsView';
 import StadiumBookingView from '../components/stadium/StadiumBookingView';
 import TicketBookingPage from '../components/stadium/TicketBookingPage';
 import CommunityView from '../components/community/CommunityView';
+import SquadView from '../components/squad/SquadView';
 import { 
   WalletView, 
   AnalyticsView, 
@@ -29,37 +30,106 @@ export default function FanDashboardPage() {
 
   // Logged in user state
   const [currentUser, setCurrentUser] = useState(() => {
-    return JSON.parse(localStorage.getItem('clubverse_user') || 'null');
+    try {
+      return JSON.parse(localStorage.getItem('clubverse_user') || 'null');
+    } catch (e) {
+      return null;
+    }
   });
+
+  // Dynamic Dashboard Data State from DB
+  const [dashboardData, setDashboardData] = useState(null);
+  const [isLoadingDashboard, setIsLoadingDashboard] = useState(true);
 
   const triggerToast = (msg) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(''), 3500);
   };
 
-  // Fetch updated user profile from MongoDB on mount if logged in
+  // Fetch updated user profile & dashboard stats from MongoDB on mount
   useEffect(() => {
-    const fetchUserProfile = async () => {
-      const storedUser = JSON.parse(localStorage.getItem('clubverse_user') || 'null');
-      if (storedUser && storedUser.id) {
-        try {
-          const res = await fetch(`http://localhost:5000/api/user/profile/${storedUser.id}`);
-          if (res.ok) {
-            const data = await res.json();
-            if (data.user) {
+    const fetchDashboardData = async () => {
+      let storedUser = null;
+      try {
+        storedUser = JSON.parse(localStorage.getItem('clubverse_user') || 'null');
+      } catch (e) {
+        storedUser = null;
+      }
+      const userId = storedUser?.id || storedUser?._id || 'guest';
+      try {
+        const res = await fetch(`http://localhost:5000/api/fan/dashboard/${userId}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success) {
+            setDashboardData(data);
+            if (data.user && storedUser) {
               const updated = { ...storedUser, ...data.user };
               setCurrentUser(updated);
               localStorage.setItem('clubverse_user', JSON.stringify(updated));
             }
           }
-        } catch (err) {
-          console.warn('Backend server fetch profile note:', err);
         }
+      } catch (err) {
+        console.warn('Backend server fetch fan dashboard note:', err);
+      } finally {
+        setIsLoadingDashboard(false);
       }
     };
 
-    fetchUserProfile();
+    fetchDashboardData();
   }, []);
+
+  // Handle Wallet Top-Up via DB API
+  const handleWalletTopUp = async (amount) => {
+    const userId = currentUser?.id || currentUser?._id;
+    try {
+      const res = await fetch('http://localhost:5000/api/fan/wallet/topup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, amount })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.wallet) {
+          setDashboardData(prev => ({
+            ...prev,
+            wallet: data.wallet
+          }));
+          triggerToast(data.message || `Wallet topped up with ₹${amount}!`);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to top up wallet:', err);
+      triggerToast('Wallet top-up failed. Please try again.');
+    }
+  };
+
+  // Handle Fan Match Poll Vote via DB API
+  const handlePollVote = async (optionId, pollId) => {
+    const userId = currentUser?.id || currentUser?._id;
+    try {
+      const res = await fetch('http://localhost:5000/api/fan/poll/vote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, pollId, optionId })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.poll) {
+          setDashboardData(prev => ({
+            ...prev,
+            poll: data.poll
+          }));
+          if (data.fan_points) {
+            setCurrentUser(prev => prev ? { ...prev, fan_points: data.fan_points } : prev);
+          }
+          triggerToast(data.message || 'Vote recorded! +50 VIP Points Claimed');
+        }
+      }
+    } catch (err) {
+      console.error('Failed to vote in poll:', err);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#F4F6FB] text-[#20221F] flex font-sans overflow-x-hidden selection:bg-[#7A8B5A] selection:text-white">
@@ -118,12 +188,15 @@ export default function FanDashboardPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6 items-stretch">
                   {/* Widget 1: Weekly Activity Bar Chart (186h) */}
                   <div className="lg:col-span-6">
-                    <ActivityChartCard />
+                    <ActivityChartCard activityData={dashboardData?.activity} />
                   </div>
 
                   {/* Widget 2: Virtual Wallet & Mint Green VISA Card */}
                   <div className="lg:col-span-6">
-                    <VirtualCardWidget />
+                    <VirtualCardWidget 
+                      walletData={dashboardData?.wallet} 
+                      onTopUp={handleWalletTopUp}
+                    />
                   </div>
                 </div>
 
@@ -131,19 +204,34 @@ export default function FanDashboardPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6 items-stretch">
                   {/* Widget 4: Total Spent Line Chart (₹820.65) */}
                   <div className="lg:col-span-6">
-                    <SpendingChartCard />
+                    <SpendingChartCard spendingData={dashboardData?.spending} />
                   </div>
 
                   {/* Widget 5: Donut Contract Type Breakdown */}
                   <div className="lg:col-span-3">
-                    <PerksDonutCard />
+                    <PerksDonutCard perksData={dashboardData?.perks} />
                   </div>
 
                   {/* Widget 6: Live Fan Match Poll */}
                   <div className="lg:col-span-3">
-                    <FanPollWidget />
+                    <FanPollWidget 
+                      pollData={dashboardData?.poll} 
+                      onVote={handlePollVote}
+                    />
                   </div>
                 </div>
+
+                {/* Grid Layout - Row 3: Club Teams & Flippable Player Cards */}
+                <div className="pt-4">
+                  <SquadView />
+                </div>
+              </motion.div>
+            )}
+
+            {/* TAB: SQUAD & TEAMS */}
+            {activeTab === 'squad' && (
+              <motion.div key="squad" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
+                <SquadView />
               </motion.div>
             )}
 

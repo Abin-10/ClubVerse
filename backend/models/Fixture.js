@@ -39,6 +39,22 @@ const fixtureSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  tactical_formation: {
+    type: String,
+    default: '4-3-3 High Press'
+  },
+  coach_notes: {
+    type: String,
+    default: ''
+  },
+  competition: {
+    type: String,
+    default: 'Premier League'
+  },
+  squad_readiness: {
+    type: String,
+    default: 'Roster Finalized'
+  },
   created_at: {
     type: Date,
     default: Date.now

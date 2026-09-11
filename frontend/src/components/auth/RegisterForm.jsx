@@ -135,6 +135,9 @@ export default function RegisterForm() {
     if (field === 'confirmPassword') setConfirmPassword(value);
     if (field === 'agreeTerms') setAgreeTerms(value);
 
+    // Clear top error banner when user modifies a field
+    setError('');
+
     // Revalidate modified field if it was touched
     if (touched[field]) {
       const err = validateField(field, value, {
@@ -155,7 +158,7 @@ export default function RegisterForm() {
       field === 'confirmPassword' ? confirmPassword :
       field === 'agreeTerms' ? agreeTerms : '';
       
-    const err = validateField(field, value);
+    const err = validateField(field, value, { password, agreeTerms });
     setFieldErrors((prev) => ({ ...prev, [field]: err }));
   };
 
@@ -163,22 +166,33 @@ export default function RegisterForm() {
     e.preventDefault();
     setError('');
 
-    // Mark all fields as touched
-    const allTouched = {
-      fullName: true,
-      email: true,
-      password: true,
-      confirmPassword: true,
-      agreeTerms: true,
-    };
-    setTouched(allTouched);
+    // Sequential field-by-field validation order
+    const fieldsSequence = ['fullName', 'email', 'password', 'confirmPassword', 'agreeTerms'];
+    
+    let firstInvalidField = null;
+    let firstErrorMessage = '';
 
-    // Run full validation check
-    const errors = validateForm();
-    setFieldErrors(errors);
+    for (const field of fieldsSequence) {
+      const val = 
+        field === 'fullName' ? fullName :
+        field === 'email' ? email :
+        field === 'password' ? password :
+        field === 'confirmPassword' ? confirmPassword :
+        field === 'agreeTerms' ? agreeTerms : '';
 
-    if (Object.keys(errors).length > 0) {
-      setError('Please meet all password and form requirements below before submitting.');
+      const err = validateField(field, val, { password, agreeTerms });
+      if (err) {
+        firstInvalidField = field;
+        firstErrorMessage = err;
+        break;
+      }
+    }
+
+    if (firstInvalidField) {
+      // Mark only the first invalid field in sequence as touched
+      setTouched((prev) => ({ ...prev, [firstInvalidField]: true }));
+      setFieldErrors((prev) => ({ ...prev, [firstInvalidField]: firstErrorMessage }));
+      setError(firstErrorMessage);
       return;
     }
 
@@ -200,6 +214,7 @@ export default function RegisterForm() {
       setLoading(false);
       setSuccess(true);
 
+      if (data.token) localStorage.setItem('clubverse_token', data.token);
       localStorage.setItem('clubverse_user', JSON.stringify(data.user));
 
       setTimeout(() => {

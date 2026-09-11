@@ -2,21 +2,30 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Vote, Trophy, Sparkles, Check, Flame } from 'lucide-react';
 
-export default function FanPollWidget() {
-  const [selectedOption, setSelectedOption] = useState(null);
-  const [hasVoted, setHasVoted] = useState(false);
+export default function FanPollWidget({ pollData, onVote }) {
+  const [selectedOption, setSelectedOption] = useState(pollData?.selected_option_id || null);
+  const [hasVoted, setHasVoted] = useState(pollData?.has_voted || false);
   const [showToast, setShowToast] = useState(false);
 
-  const options = [
+  const question = pollData?.question || 'Who will score first in the Derby?';
+  const rewardPoints = pollData?.reward_points || 50;
+  const options = pollData?.options || [
     { id: 'opt1', label: 'ClubVerse Win (2-0)', votes: 68 },
     { id: 'opt2', label: 'Draw Match (1-1)', votes: 20 },
     { id: 'opt3', label: 'Rival Win (0-1)', votes: 12 },
   ];
 
+  const effectiveHasVoted = hasVoted || pollData?.has_voted;
+  const effectiveSelectedOption = selectedOption || pollData?.selected_option_id;
+
   const handleVote = (id) => {
+    if (effectiveHasVoted) return; // Prevent double voting
     setSelectedOption(id);
     setHasVoted(true);
     setShowToast(true);
+    if (onVote) {
+      onVote(id, pollData?.id);
+    }
     setTimeout(() => setShowToast(false), 3000);
   };
 
@@ -38,24 +47,25 @@ export default function FanPollWidget() {
           </span>
           <div>
             <h3 className="font-serif font-black text-lg text-white">Live Fan Match Vote</h3>
-            <p className="text-[11px] text-[#A1A19A]">Who will score first in the Derby?</p>
+            <p className="text-[11px] text-[#A1A19A]">{question}</p>
           </div>
         </div>
         <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-[#BEF264] text-[#20221F]">
-          +50 Fan Points
+          +{rewardPoints} Fan Points
         </span>
       </div>
 
       {/* Options List */}
       <div className="space-y-2.5 z-10 my-2">
         {options.map((opt) => {
-          const isSelected = selectedOption === opt.id;
+          const isSelected = effectiveSelectedOption === opt.id;
           return (
             <motion.button
               key={opt.id}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => handleVote(opt.id)}
+              disabled={effectiveHasVoted}
               className={`w-full relative p-3 rounded-2xl border text-left flex items-center justify-between overflow-hidden transition-all ${
                 isSelected 
                   ? 'border-[#BEF264] bg-[#7A8B5A]/30 shadow-warm-md' 
@@ -63,7 +73,7 @@ export default function FanPollWidget() {
               }`}
             >
               {/* Animated Voting Bar Background */}
-              {hasVoted && (
+              {effectiveHasVoted && (
                 <motion.div 
                   initial={{ width: 0 }}
                   animate={{ width: `${opt.votes}%` }}
@@ -77,7 +87,7 @@ export default function FanPollWidget() {
                 {opt.label}
               </span>
 
-              {hasVoted && (
+              {effectiveHasVoted && (
                 <span className="text-xs font-black text-[#BEF264] z-10">
                   {opt.votes}%
                 </span>

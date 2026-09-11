@@ -36,6 +36,7 @@ export default function AdminHeader({
 
   const handleLogout = () => {
     localStorage.removeItem('clubverse_user');
+    localStorage.removeItem('clubverse_token');
     navigate('/login');
     window.location.reload();
   };
@@ -111,7 +112,7 @@ export default function AdminHeader({
                           {currentUser?.name || currentUser?.full_name || 'Club Admin'}
                         </h4>
                         <p className="text-[11px] text-[#6F716B] truncate">
-                          {currentUser?.email || 'admin@clubverse.com'}
+                          {currentUser?.email || 'soccer097711@gmail.com'}
                         </p>
                         <span className="inline-block mt-1 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider rounded-full bg-[#20221F] text-[#BEF264]">
                           System Administrator

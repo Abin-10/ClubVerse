@@ -478,17 +478,20 @@ export default function CommunityView({ currentUser, triggerToast }) {
                   {/* Chat Message Author Info Header */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      {post.author_avatar ? (
-                        <img 
-                          src={post.author_avatar} 
-                          alt={post.author_name}
-                          className="w-9 h-9 rounded-full object-cover border border-[#E4E1D8]"
-                        />
-                      ) : (
-                        <div className="w-9 h-9 rounded-full bg-[#20221F] text-[#BEF264] flex items-center justify-center font-black text-xs">
-                          {post.author_name ? post.author_name[0] : 'F'}
-                        </div>
-                      )}
+                      {(() => {
+                        const avatarToUse = ((post.author_id && post.author_id === userId) || (post.author_name && post.author_name === userName)) && userAvatar ? userAvatar : post.author_avatar;
+                        return avatarToUse ? (
+                          <img 
+                            src={avatarToUse} 
+                            alt={post.author_name}
+                            className="w-9 h-9 rounded-full object-cover border border-[#E4E1D8]"
+                          />
+                        ) : (
+                          <div className="w-9 h-9 rounded-full bg-[#20221F] text-[#BEF264] flex items-center justify-center font-black text-xs">
+                            {post.author_name ? post.author_name[0] : 'F'}
+                          </div>
+                        );
+                      })()}
 
                       <div>
                         <div className="flex items-center gap-2">
@@ -620,13 +623,16 @@ export default function CommunityView({ currentUser, triggerToast }) {
                               <div key={idx} className="p-2.5 rounded-2xl bg-[#F7F5EF] border border-[#E4E1D8] space-y-1">
                                 <div className="flex items-center justify-between text-xs">
                                   <div className="flex items-center gap-2">
-                                    {cmt.author_avatar ? (
-                                      <img src={cmt.author_avatar} alt={cmt.author_name} className="w-5 h-5 rounded-full object-cover" />
-                                    ) : (
-                                      <div className="w-5 h-5 rounded-full bg-[#20221F] text-[#BEF264] text-[9px] font-black flex items-center justify-center">
-                                        {cmt.author_name ? cmt.author_name[0] : 'C'}
-                                      </div>
-                                    )}
+                                    {(() => {
+                                      const cmtAvatarToUse = ((cmt.author_id && cmt.author_id === userId) || (cmt.author_name && cmt.author_name === userName)) && userAvatar ? userAvatar : cmt.author_avatar;
+                                      return cmtAvatarToUse ? (
+                                        <img src={cmtAvatarToUse} alt={cmt.author_name} className="w-5 h-5 rounded-full object-cover" />
+                                      ) : (
+                                        <div className="w-5 h-5 rounded-full bg-[#20221F] text-[#BEF264] text-[9px] font-black flex items-center justify-center">
+                                          {cmt.author_name ? cmt.author_name[0] : 'C'}
+                                        </div>
+                                      );
+                                    })()}
                                     <span className="font-black text-[#20221F]">{cmt.author_name}</span>
                                   </div>
                                   <span className="text-[10px] text-[#6F716B]">

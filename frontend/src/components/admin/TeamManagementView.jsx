@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import TeamModal from './TeamModal';
 import DeleteConfirmModal from './DeleteConfirmModal';
+import PointsTableComponent from './PointsTableComponent';
 
 const API = 'http://localhost:5000/api';
 
@@ -24,7 +25,12 @@ export default function TeamManagementView({ triggerToast }) {
   const fetchTeams = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`${API}/teams`);
+      let res;
+      try {
+        res = await fetch(`${API}/teams`);
+      } catch (e) {
+        res = await fetch('http://127.0.0.1:5000/api/teams');
+      }
       if (res.ok) {
         const data = await res.json();
         setTeams(data);
@@ -41,19 +47,33 @@ export default function TeamManagementView({ triggerToast }) {
   const handleSave = async (data) => {
     try {
       const isEdit = Boolean(data._id);
-      const url = isEdit ? `${API}/teams/${data._id}` : `${API}/teams`;
-      const res = await fetch(url, {
-        method: isEdit ? 'PUT' : 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
+      const primaryUrl = isEdit ? `${API}/teams/${data._id}` : `${API}/teams`;
+      const fallbackUrl = isEdit ? `http://127.0.0.1:5000/api/teams/${data._id}` : `http://127.0.0.1:5000/api/teams`;
+
+      let res;
+      try {
+        res = await fetch(primaryUrl, {
+          method: isEdit ? 'PUT' : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+      } catch (netErr) {
+        console.warn('Primary fetch failed, retrying with 127.0.0.1:', netErr);
+        res = await fetch(fallbackUrl, {
+          method: isEdit ? 'PUT' : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+      }
+
       const result = await res.json();
-      if (!res.ok) throw new Error(result.message);
+      if (!res.ok) throw new Error(result.message || 'Failed to save team.');
       setIsModalOpen(false);
       triggerToast(result.message || (isEdit ? 'Team updated successfully!' : 'Team created successfully!'));
       fetchTeams();
     } catch (err) {
-      alert(err.message || 'Failed to save team.');
+      console.error('Save team error:', err);
+      alert(err.message || 'Network error saving team. Please verify backend server is running.');
     }
   };
 
@@ -61,7 +81,12 @@ export default function TeamManagementView({ triggerToast }) {
     const { itemToDelete } = deleteConfig;
     if (!itemToDelete) return;
     try {
-      const res = await fetch(`${API}/teams/${itemToDelete._id}`, { method: 'DELETE' });
+      let res;
+      try {
+        res = await fetch(`${API}/teams/${itemToDelete._id}`, { method: 'DELETE' });
+      } catch (netErr) {
+        res = await fetch(`http://127.0.0.1:5000/api/teams/${itemToDelete._id}`, { method: 'DELETE' });
+      }
       if (!res.ok) { const d = await res.json(); throw new Error(d.message); }
       setDeleteConfig({ isOpen: false, itemType: 'Team', itemName: '', itemToDelete: null });
       triggerToast(`${itemToDelete.name} removed permanently.`);
@@ -416,6 +441,11 @@ export default function TeamManagementView({ triggerToast }) {
           </AnimatePresence>
         </div>
       )}
+
+      {/* ── LEAGUE POINTS TABLE & STANDINGS SECTION ── */}
+      <div className="pt-6 border-t border-[#E4E1D8]">
+        <PointsTableComponent triggerToast={triggerToast} />
+      </div>
 
       {/* ── MODALS ── */}
       <TeamModal

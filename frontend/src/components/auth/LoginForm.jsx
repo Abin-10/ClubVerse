@@ -67,12 +67,14 @@ export default function LoginForm() {
       if (data.user.mustChangePassword) {
         setPendingUser(data.user);
         // Store user temporarily so role is available after password change
+        if (data.token) localStorage.setItem('clubverse_token', data.token);
         localStorage.setItem('clubverse_user', JSON.stringify(data.user));
         setView('change_password');
         return;
       }
 
       setSuccess(true);
+      if (data.token) localStorage.setItem('clubverse_token', data.token);
       localStorage.setItem('clubverse_user', JSON.stringify(data.user));
 
       setTimeout(() => {
@@ -201,6 +203,7 @@ export default function LoginForm() {
 
       setLoading(false);
       setSuccess(true);
+      if (data.token) localStorage.setItem('clubverse_token', data.token);
       localStorage.setItem('clubverse_user', JSON.stringify(data.user));
 
                 setTimeout(() => {

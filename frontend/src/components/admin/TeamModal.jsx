@@ -35,8 +35,8 @@ export default function TeamModal({ isOpen, onClose, onSave, teamToEdit }) {
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        alert('Image file size must be under 5MB');
+      if (file.size > 2 * 1024 * 1024) {
+        alert('Image file size must be under 2MB for fast team logo saving.');
         return;
       }
       const reader = new FileReader();

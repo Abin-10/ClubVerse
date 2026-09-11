@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { SlidersHorizontal, TrendingUp, Calendar } from 'lucide-react';
 
-export default function ActivityChartCard() {
+export default function ActivityChartCard({ activityData }) {
   const [selectedDay, setSelectedDay] = useState('Fri');
 
-  const daysData = [
+  const defaultDays = [
     { day: 'Mon', hours: 18, height: '40%' },
     { day: 'Tue', hours: 24, height: '55%' },
     { day: 'Wed', hours: 20, height: '45%' },
@@ -15,7 +15,14 @@ export default function ActivityChartCard() {
     { day: 'Sun', hours: 22, height: '50%' },
   ];
 
-  const activeDayObj = daysData.find(d => d.day === selectedDay) || daysData[4];
+  const daysData = Array.isArray(activityData?.days) && activityData.days.length > 0 
+    ? activityData.days 
+    : defaultDays;
+
+  const totalHours = activityData?.total_hours || 186;
+  const trend = activityData?.trend || '+14.2%';
+
+  const activeDayObj = daysData.find(d => d?.day === selectedDay) || daysData[0] || defaultDays[0];
 
   return (
     <motion.div 
@@ -32,10 +39,10 @@ export default function ActivityChartCard() {
           </h3>
           <div className="flex items-center gap-2 mt-1">
             <span className="text-xs text-[#6F716B]">Worked this week</span>
-            <span className="font-extrabold text-2xl text-[#20221F]">186h</span>
+            <span className="font-extrabold text-2xl text-[#20221F]">{totalHours}h</span>
             <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[#D9F99D] text-[#365314] border border-[#BEF264]">
               <TrendingUp className="w-3 h-3" />
-              +14.2%
+              {trend}
             </span>
           </div>
         </div>

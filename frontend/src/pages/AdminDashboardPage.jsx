@@ -8,6 +8,7 @@ import CoachManagementView from '../components/admin/CoachManagementView';
 import StadiumManagementView from '../components/admin/StadiumManagementView';
 import TeamManagementView from '../components/admin/TeamManagementView';
 import FixtureManagementView from '../components/admin/FixtureManagementView';
+import PointsTableComponent from '../components/admin/PointsTableComponent';
 import PlayerModal from '../components/admin/PlayerModal';
 import CoachModal from '../components/admin/CoachModal';
 import DeleteConfirmModal from '../components/admin/DeleteConfirmModal';
@@ -50,9 +51,12 @@ export default function AdminDashboardPage() {
   // Current admin profile from localStorage
   const [currentUser, setCurrentUser] = useState(() => {
     const user = JSON.parse(localStorage.getItem('clubverse_user') || 'null');
+    if (user && user.email === 'admin@clubverse.com') {
+      user.email = 'soccer097711@gmail.com';
+    }
     return user || {
       name: 'Club Administrator',
-      email: 'admin@clubverse.com',
+      email: 'soccer097711@gmail.com',
       role: 'Admin',
       profile_image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80'
     };
@@ -92,8 +96,28 @@ export default function AdminDashboardPage() {
     }
   };
 
+  // Fetch Admin user profile from MongoDB
+  const fetchAdminProfile = async () => {
+    const storedUser = JSON.parse(localStorage.getItem('clubverse_user') || 'null');
+    const targetId = storedUser?.id || storedUser?._id || 'admin';
+    try {
+      const res = await fetch(`http://localhost:5000/api/user/profile/${targetId}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.user) {
+          const updated = { ...storedUser, ...data.user };
+          setCurrentUser(updated);
+          localStorage.setItem('clubverse_user', JSON.stringify(updated));
+        }
+      }
+    } catch (err) {
+      console.warn('Backend fetch admin profile note:', err);
+    }
+  };
+
   useEffect(() => {
     fetchData();
+    fetchAdminProfile();
   }, []);
 
   // ----------------------------------------------------
@@ -259,6 +283,18 @@ export default function AdminDashboardPage() {
                   onNavigateToPlayers={() => setActiveTab('players')}
                   onNavigateToCoaches={() => setActiveTab('coaches')}
                 />
+              </motion.div>
+            )}
+
+            {/* POINTS TABLE / STANDINGS TAB */}
+            {activeTab === 'standings' && (
+              <motion.div
+                key="standings"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+              >
+                <PointsTableComponent triggerToast={triggerToast} />
               </motion.div>
             )}
 

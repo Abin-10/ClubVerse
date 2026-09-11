@@ -9,12 +9,14 @@ import {
   ShieldCheck,
   Landmark,
   Shield,
-  Calendar
+  Calendar,
+  Trophy
 } from 'lucide-react';
 
 export default function AdminSidebar({ activeTab, setActiveTab }) {
   const menuItems = [
     { id: 'overview', icon: Home, label: 'Overview' },
+    { id: 'standings', icon: Trophy, label: 'Points Table' },
     { id: 'teams', icon: Shield, label: 'Teams' },
     { id: 'fixtures', icon: Calendar, label: 'Fixtures' },
     { id: 'stadiums', icon: Landmark, label: 'Stadiums' },

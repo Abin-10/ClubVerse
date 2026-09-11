@@ -12,12 +12,14 @@ import {
   Award,
   Users,
   Landmark,
-  TicketCheck
+  TicketCheck,
+  Shield
 } from 'lucide-react';
 
 export default function DashboardSidebar({ activeTab, setActiveTab }) {
   const menuItems = [
     { id: 'overview', icon: Home, label: 'Overview' },
+    { id: 'squad', icon: Shield, label: 'Club Roster & Players' },
     { id: 'booktickets', icon: TicketCheck, label: 'Book Tickets' },
     { id: 'community', icon: Users, label: 'Fan Club' },
   ];

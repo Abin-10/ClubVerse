@@ -31,6 +31,7 @@ export default function PlayerHeader({
 
   const handleLogout = () => {
     localStorage.removeItem('clubverse_user');
+    localStorage.removeItem('clubverse_token');
     navigate('/login');
     window.location.reload();
   };

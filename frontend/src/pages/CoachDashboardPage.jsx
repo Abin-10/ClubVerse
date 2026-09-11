@@ -145,6 +145,7 @@ export default function CoachDashboardPage() {
                 exit={{ opacity: 0, y: -10 }}
               >
                 <CoachTrainingView 
+                  players={players}
                   searchQuery={searchQuery}
                   isCreateModalOpen={isCreateTrainingModalOpen}
                   setIsCreateModalOpen={setIsCreateTrainingModalOpen}
@@ -161,7 +162,7 @@ export default function CoachDashboardPage() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
               >
-                <CoachPerformanceView />
+                <CoachPerformanceView players={players} />
               </motion.div>
             )}
 

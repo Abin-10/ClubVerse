@@ -21,7 +21,7 @@ export default function DashboardShowcase() {
     } else if (user) {
       navigate('/dashboard');
     } else {
-      navigate('/login', { state: { message: 'Please log in as a Fan to access your Fan Dashboard.' } });
+      navigate('/login', { state: { message: 'Please log in as a Fan to access your Dashboard.' } });
     }
   };
 
@@ -51,7 +51,7 @@ export default function DashboardShowcase() {
           </h2>
 
           <p className="text-base text-[#6F716B] leading-relaxed">
-            Experience an elegant, real-time fan dashboard crafted with fluid scroll animations, 3D visual cards, live match polling, and instant wallet management.
+            Experience an elegant, real-time dashboard crafted with fluid scroll animations, 3D visual cards, live match polling, and instant wallet management.
           </p>
         </motion.div>
 
@@ -277,7 +277,7 @@ export default function DashboardShowcase() {
               onClick={handleLaunchDashboard}
               className="px-6 py-3 rounded-full bg-[#20221F] hover:bg-[#7A8B5A] text-white text-xs font-extrabold transition-all shadow-warm-md flex items-center gap-2"
             >
-              <span>Launch Fan Dashboard</span>
+              <span>Launch Dashboard</span>
               <ArrowRight className="w-4 h-4 text-[#BEF264]" />
             </button>
           </div>

@@ -33,6 +33,7 @@ export default function DashboardHeader({ currentUser, onAddPassClick, onCreateR
 
   const handleLogout = () => {
     localStorage.removeItem('clubverse_user');
+    localStorage.removeItem('clubverse_token');
     navigate('/login');
     window.location.reload();
   };
@@ -150,7 +151,7 @@ export default function DashboardHeader({ currentUser, onAddPassClick, onCreateR
             <span className="text-[#20221F] font-bold">Dashboard</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-[#20221F] font-serif tracking-tight mt-0.5">
-            Fan Dashboard
+            Dashboard
           </h1>
         </div>
 

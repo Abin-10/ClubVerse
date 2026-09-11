@@ -93,28 +93,62 @@ export default function FanSettingsView({ currentUser, onUpdateUserData, trigger
         return;
       }
       const reader = new FileReader();
-      reader.onloadend = () => {
+      reader.onloadend = async () => {
         const newImg = reader.result;
         setProfileImage(newImg);
+        const stored = currentUser || JSON.parse(localStorage.getItem('clubverse_user') || '{}');
         const updatedUser = {
-          ...(currentUser || JSON.parse(localStorage.getItem('clubverse_user') || '{}')),
+          ...stored,
           profile_image: newImg
         };
         localStorage.setItem('clubverse_user', JSON.stringify(updatedUser));
         if (onUpdateUserData) onUpdateUserData(updatedUser);
+
+        if (stored.email) {
+          try {
+            await fetch('http://localhost:5000/api/user/profile', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                email: stored.email,
+                profile_image: newImg
+              })
+            });
+            if (triggerToast) triggerToast('Profile picture uploaded!');
+          } catch (err) {
+            console.warn('Image avatar sync note:', err);
+          }
+        }
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleSelectPreset = (preset) => {
+  const handleSelectPreset = async (preset) => {
     setProfileImage(preset);
+    const stored = currentUser || JSON.parse(localStorage.getItem('clubverse_user') || '{}');
     const updatedUser = {
-      ...(currentUser || JSON.parse(localStorage.getItem('clubverse_user') || '{}')),
+      ...stored,
       profile_image: preset
     };
     localStorage.setItem('clubverse_user', JSON.stringify(updatedUser));
     if (onUpdateUserData) onUpdateUserData(updatedUser);
+
+    if (stored.email) {
+      try {
+        await fetch('http://localhost:5000/api/user/profile', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: stored.email,
+            profile_image: preset
+          })
+        });
+        if (triggerToast) triggerToast('Profile picture updated!');
+      } catch (err) {
+        console.warn('Preset avatar sync note:', err);
+      }
+    }
   };
 
   // Save Profile Changes to MongoDB

@@ -86,7 +86,7 @@ export const parseMatchDateTime = (match_date, match_time) => {
 
 /**
  * Determines whether seat booking is open for a fixture.
- * Rule: Ticket booking closes 2 hours before match kickoff.
+ * Rule: Ticket booking closes 30 minutes before match kickoff.
  */
 export const getBookingStatus = (match_date, match_time, status) => {
   if (status === 'Completed' || status === 'Live') {
@@ -98,16 +98,16 @@ export const getBookingStatus = (match_date, match_time, status) => {
 
   const now = new Date();
   const diffMs = kickoff.getTime() - now.getTime();
-  const twoHoursMs = 2 * 60 * 60 * 1000; // 2 hours
+  const thirtyMinsMs = 30 * 60 * 1000; // 30 minutes
 
   if (diffMs <= 0) {
     return { open: false, reason: 'Match Started / Past' };
   }
-  if (diffMs < twoHoursMs) {
+  if (diffMs < thirtyMinsMs) {
     const minutesLeft = Math.max(0, Math.floor(diffMs / (60 * 1000)));
     return { 
       open: false, 
-      reason: `Booking Closed (Within 2 hrs of kickoff — ${minutesLeft} mins to start)` 
+      reason: `Booking Disabled (Within 30 mins of kickoff — ${minutesLeft} mins to start)` 
     };
   }
 

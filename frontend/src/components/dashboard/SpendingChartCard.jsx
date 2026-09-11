@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { SlidersHorizontal, ArrowUpRight, ShoppingBag, Wallet } from 'lucide-react';
 
-export default function SpendingChartCard() {
+export default function SpendingChartCard({ spendingData }) {
   const [activePoint, setActivePoint] = useState(4); // Friday
 
-  const graphPoints = [
+  const defaultPoints = [
     { day: 'Mon', x: 20, y: 110, val: 320 },
     { day: 'Tue', x: 90, y: 130, val: 280 },
     { day: 'Wed', x: 160, y: 90, val: 510 },
@@ -15,7 +15,17 @@ export default function SpendingChartCard() {
     { day: 'Sun', x: 440, y: 100, val: 520 },
   ];
 
-  const activeObj = graphPoints[activePoint];
+  const graphPoints = Array.isArray(spendingData?.graph_points) && spendingData.graph_points.length > 0 
+    ? spendingData.graph_points 
+    : defaultPoints;
+
+  const passesCount = spendingData?.passes_count ?? 10;
+  const assetsCount = spendingData?.assets_count ?? 26;
+
+  const activeObj = graphPoints[activePoint] || graphPoints[0] || defaultPoints[0];
+  const activeVal = typeof activeObj?.val === 'number' ? activeObj.val : 820.65;
+  const activeX = typeof activeObj?.x === 'number' ? activeObj.x : 300;
+  const activeY = typeof activeObj?.y === 'number' ? activeObj.y : 40;
 
   return (
     <motion.div 
@@ -33,7 +43,7 @@ export default function SpendingChartCard() {
           <div className="flex items-baseline gap-2 mt-1">
             <span className="text-xs text-[#6F716B]">Spent this week</span>
             <span className="font-extrabold text-2xl text-[#20221F] font-serif">
-              ₹{activeObj.val.toFixed(2)}
+              ₹{activeVal.toFixed(2)}
             </span>
           </div>
         </div>
@@ -51,13 +61,13 @@ export default function SpendingChartCard() {
       <div className="flex items-center gap-6 mb-4">
         <div className="flex items-center gap-2">
           <div className="w-6 h-6 rounded-full bg-[#EFEEE8] flex items-center justify-center text-xs font-black text-[#20221F]">
-            10
+            {passesCount}
           </div>
           <span className="text-xs text-[#6F716B] font-bold">Passes</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-6 h-6 rounded-full bg-[#EFEEE8] flex items-center justify-center text-xs font-black text-[#20221F]">
-            26
+            {assetsCount}
           </div>
           <span className="text-xs text-[#6F716B] font-bold">Assets</span>
         </div>
@@ -93,10 +103,10 @@ export default function SpendingChartCard() {
 
           {/* Data Nodes */}
           {graphPoints.map((pt, idx) => (
-            <g key={pt.day} className="cursor-pointer" onClick={() => setActivePoint(idx)}>
+            <g key={pt.day || idx} className="cursor-pointer" onClick={() => setActivePoint(idx)}>
               <circle 
-                cx={pt.x} 
-                cy={pt.y} 
+                cx={pt.x || 20} 
+                cy={pt.y || 100} 
                 r={activePoint === idx ? "7" : "4"} 
                 fill={activePoint === idx ? "#BEF264" : "#20221F"} 
                 stroke={activePoint === idx ? "#20221F" : "none"}
@@ -110,14 +120,14 @@ export default function SpendingChartCard() {
         {/* Floating Tooltip Pill for Active Point */}
         <motion.div 
           animate={{ 
-            left: `${(activeObj.x / 460) * 100}%`,
-            top: `${(activeObj.y / 150) * 100 - 35}%`
+            left: `${(activeX / 460) * 100}%`,
+            top: `${(activeY / 150) * 100 - 35}%`
           }}
           transition={{ type: "spring", stiffness: 300, damping: 25 }}
           className="absolute -translate-x-1/2 bg-[#BEF264] text-[#365314] text-[10px] font-black px-2.5 py-1 rounded-full shadow-warm-sm border border-[#A3E635] flex items-center gap-1 pointer-events-none"
         >
-          <span>{activeObj.label || 'SPENT'}</span>
-          <span>₹{activeObj.val}</span>
+          <span>{activeObj?.label || 'SPENT'}</span>
+          <span>₹{activeVal}</span>
         </motion.div>
 
         {/* Days X Axis */}

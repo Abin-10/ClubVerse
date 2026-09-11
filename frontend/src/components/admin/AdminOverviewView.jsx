@@ -1,8 +1,28 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Users, Award, Calendar, Activity, ArrowUpRight, CheckCircle2, Shield, Sparkles, ChevronRight } from 'lucide-react';
+import { getTeamLogo } from '../../utils/teamUtils';
+import PointsTableComponent from './PointsTableComponent';
 
-export default function AdminOverviewView({ stats, onNavigateToPlayers, onNavigateToCoaches }) {
+export default function AdminOverviewView({ stats = {}, onNavigateToPlayers, onNavigateToCoaches }) {
+  const upcomingMatchesList = Array.isArray(stats.upcomingMatches) && stats.upcomingMatches.length > 0
+    ? stats.upcomingMatches
+    : [
+        { id: 1, opponent: 'Arsenal FC', date: 'Sat, Feb 02, 2026', time: '20:00 UTC', venue: 'Emirates Stadium (Away)', status: 'Confirmed' },
+        { id: 2, opponent: 'Chelsea FC', date: 'Sun, Feb 10, 2026', time: '17:30 UTC', venue: 'ClubVerse Stadium (Home)', status: 'Upcoming' },
+        { id: 3, opponent: 'Manchester City', date: 'Sat, Feb 16, 2026', time: '15:00 UTC', venue: 'Etihad Stadium (Away)', status: 'Scheduled' },
+        { id: 4, opponent: 'Liverpool FC', date: 'Sat, Feb 23, 2026', time: '19:45 UTC', venue: 'ClubVerse Stadium (Home)', status: 'Scheduled' }
+      ];
+
+  const recentActivitiesList = Array.isArray(stats.recentActivities) && stats.recentActivities.length > 0
+    ? stats.recentActivities
+    : [
+        { id: 1, title: 'Marcus Rashford profile details updated', type: 'Player Update', time: '10 mins ago', user: 'Admin' },
+        { id: 2, title: 'Mikel Arteta appointed as Tactical Head Coach', type: 'Coach Appointed', time: '42 mins ago', user: 'Admin' },
+        { id: 3, title: 'New player Bukayo Saka registered in MongoDB', type: 'Registration', time: '2 hours ago', user: 'System' },
+        { id: 4, title: 'Fan matchday passes inventory synchronized', type: 'Database Sync', time: '5 hours ago', user: 'MongoDB' }
+      ];
+
   const statCards = [
     {
       title: 'Total Players',
@@ -26,8 +46,8 @@ export default function AdminOverviewView({ stats, onNavigateToPlayers, onNaviga
     },
     {
       title: 'Upcoming Matches',
-      count: stats.upcomingMatchesCount || 4,
-      subtext: 'Next fixture in 3 days',
+      count: stats.upcomingMatchesCount ?? upcomingMatchesList.length,
+      subtext: 'Next official fixtures in MongoDB',
       icon: Calendar,
       color: 'from-[#B08D57] to-[#8C6D3B]',
       accentColor: 'text-[#FFFDF8]',
@@ -35,27 +55,13 @@ export default function AdminOverviewView({ stats, onNavigateToPlayers, onNaviga
     },
     {
       title: 'Recent Audit Activities',
-      count: stats.recentActivitiesCount || 12,
+      count: stats.recentActivitiesCount ?? recentActivitiesList.length,
       subtext: 'System synced with MongoDB',
       icon: Activity,
       color: 'from-[#20221F] to-[#3B3F38]',
       accentColor: 'text-[#BEF264]',
       badge: 'MongoDB Live'
     }
-  ];
-
-  const upcomingMatches = [
-    { id: 1, opponent: 'Arsenal FC', date: 'Sat, Feb 02, 2026', time: '20:00 UTC', venue: 'Emirates Stadium (Away)', status: 'Confirmed' },
-    { id: 2, opponent: 'Chelsea FC', date: 'Sun, Feb 10, 2026', time: '17:30 UTC', venue: 'ClubVerse Stadium (Home)', status: 'Upcoming' },
-    { id: 3, opponent: 'Manchester City', date: 'Sat, Feb 16, 2026', time: '15:00 UTC', venue: 'Etihad Stadium (Away)', status: 'Scheduled' },
-    { id: 4, opponent: 'Liverpool FC', date: 'Sat, Feb 23, 2026', time: '19:45 UTC', venue: 'ClubVerse Stadium (Home)', status: 'Scheduled' }
-  ];
-
-  const recentActivities = [
-    { id: 1, title: 'Marcus Rashford profile details updated', type: 'Player Update', time: '10 mins ago', user: 'Admin' },
-    { id: 2, title: 'Mikel Arteta appointed as Tactical Head Coach', type: 'Coach Appointed', time: '42 mins ago', user: 'Admin' },
-    { id: 3, title: 'New player Bukayo Saka registered in MongoDB', type: 'Registration', time: '2 hours ago', user: 'System' },
-    { id: 4, title: 'Fan matchday passes inventory synchronized', type: 'Database Sync', time: '5 hours ago', user: 'MongoDB' }
   ];
 
   return (
@@ -139,31 +145,45 @@ export default function AdminOverviewView({ stats, onNavigateToPlayers, onNaviga
                 </div>
                 <div>
                   <h3 className="font-serif font-black text-lg text-[#20221F]">Upcoming Matches</h3>
-                  <p className="text-xs text-[#6F716B]">Next official fixtures for ClubVerse</p>
+                  <p className="text-xs text-[#6F716B]">Next official fixtures for ClubVerse from MongoDB</p>
                 </div>
               </div>
               <span className="text-xs font-bold px-3 py-1 rounded-full bg-[#EFEEE8] text-[#20221F]">
-                4 Fixtures
+                {upcomingMatchesList.length} Fixtures
               </span>
             </div>
 
             <div className="space-y-3 mt-4">
-              {upcomingMatches.map((m) => (
+              {upcomingMatchesList.map((m) => (
                 <div 
                   key={m.id}
                   className="p-4 rounded-2xl bg-[#F7F5EF] border border-[#E4E1D8] flex flex-wrap items-center justify-between gap-3 hover:border-[#7A8B5A]/50 transition-colors"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-[#20221F] text-white font-serif font-bold text-xs flex items-center justify-center">
-                      VS
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-bold text-[#20221F]">ClubVerse vs {m.opponent}</h4>
-                      <p className="text-[11px] text-[#6F716B]">{m.venue}</p>
+                    {m.awayTeamObj || m.homeTeamObj ? (
+                      <div className="w-8 h-8 rounded-full bg-white border border-[#E4E1D8] shadow-sm flex items-center justify-center p-0.5 overflow-hidden shrink-0">
+                        <img 
+                          src={getTeamLogo(m.awayTeamObj || m.homeTeamObj)} 
+                          alt={m.opponent} 
+                          className="w-full h-full object-contain" 
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = 'https://images.unsplash.com/photo-1614632537190-23e4146777db?w=200&auto=format&fit=crop&q=80';
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-[#20221F] text-white font-serif font-bold text-xs flex items-center justify-center shrink-0">
+                        VS
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <h4 className="text-xs font-bold text-[#20221F] truncate">ClubVerse vs {m.opponent}</h4>
+                      <p className="text-[11px] text-[#6F716B] truncate">{m.venue}</p>
                     </div>
                   </div>
 
-                  <div className="text-right">
+                  <div className="text-right shrink-0">
                     <span className="text-xs font-extrabold text-[#7A8B5A] block">{m.date}</span>
                     <span className="text-[10px] text-[#6F716B] font-semibold">{m.time}</span>
                   </div>
@@ -183,13 +203,13 @@ export default function AdminOverviewView({ stats, onNavigateToPlayers, onNaviga
                 </div>
                 <div>
                   <h3 className="font-serif font-black text-lg text-[#20221F]">Recent Activity</h3>
-                  <p className="text-xs text-[#6F716B]">System & administrative updates</p>
+                  <p className="text-xs text-[#6F716B]">System & administrative updates from MongoDB</p>
                 </div>
               </div>
             </div>
 
             <div className="space-y-3.5 mt-4">
-              {recentActivities.map((act) => (
+              {recentActivitiesList.map((act) => (
                 <div key={act.id} className="flex items-start gap-3 p-3 rounded-2xl bg-[#F7F5EF]/80 border border-[#E4E1D8]">
                   <div className="w-2 h-2 rounded-full bg-[#7A8B5A] mt-1.5 shrink-0" />
                   <div className="min-w-0 flex-1 space-y-0.5">
@@ -205,6 +225,11 @@ export default function AdminOverviewView({ stats, onNavigateToPlayers, onNaviga
           </div>
         </div>
 
+      </div>
+
+      {/* Live League Points Table Section */}
+      <div className="pt-4 border-t border-[#E4E1D8]">
+        <PointsTableComponent />
       </div>
 
     </div>

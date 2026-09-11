@@ -2,14 +2,15 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { SlidersHorizontal, Award, Sparkles, Clock, CheckCircle } from 'lucide-react';
 
-export default function PerksDonutCard() {
+export default function PerksDonutCard({ perksData }) {
   const [selectedSegment, setSelectedSegment] = useState('Matchday VIP');
 
-  const segments = [
-    { name: 'Matchday VIP', percentage: 86, color: '#22D3EE', label: '86%' },
-    { name: 'Merch Perks', percentage: 10, color: '#38BDF8', label: '10%' },
-    { name: 'Hospitality', percentage: 4, color: '#FACC15', label: '4%' },
-  ];
+  const matchdayVip = perksData?.matchday_vip ?? 86;
+  const merchPerks = perksData?.merch_perks ?? 10;
+  const hospitality = perksData?.hospitality ?? 4;
+  const milestone = perksData?.milestone ?? 140;
+  const bonuses = perksData?.bonuses ?? 48;
+  const hourly = perksData?.hourly ?? 16;
 
   return (
     <motion.div 
@@ -84,7 +85,7 @@ export default function PerksDonutCard() {
 
         {/* Center Donut Label */}
         <div className="absolute flex flex-col items-center justify-center text-center pointer-events-none">
-          <span className="text-2xl font-black text-[#20221F] font-serif">86%</span>
+          <span className="text-2xl font-black text-[#20221F] font-serif">{matchdayVip}%</span>
           <span className="text-[10px] text-[#6F716B] font-extrabold uppercase">VIP Tier</span>
         </div>
       </div>
@@ -92,17 +93,17 @@ export default function PerksDonutCard() {
       {/* Legend & Sub-Metrics */}
       <div className="pt-2 border-t border-[#E4E1D8] grid grid-cols-3 gap-2 text-center">
         <div className="p-2 rounded-2xl bg-[#F7F5EF] border border-[#E4E1D8]">
-          <div className="text-sm font-black text-[#20221F]">140</div>
+          <div className="text-sm font-black text-[#20221F]">{milestone}</div>
           <div className="text-[10px] text-[#6F716B] font-bold">Milestone</div>
         </div>
 
         <div className="p-2 rounded-2xl bg-[#F7F5EF] border border-[#E4E1D8]">
-          <div className="text-sm font-black text-[#20221F]">48</div>
+          <div className="text-sm font-black text-[#20221F]">{bonuses}</div>
           <div className="text-[10px] text-[#6F716B] font-bold">Bonuses</div>
         </div>
 
         <div className="p-2 rounded-2xl bg-[#F7F5EF] border border-[#E4E1D8]">
-          <div className="text-sm font-black text-[#20221F]">16</div>
+          <div className="text-sm font-black text-[#20221F]">{hourly}</div>
           <div className="text-[10px] text-[#6F716B] font-bold">Hourly</div>
         </div>
       </div>

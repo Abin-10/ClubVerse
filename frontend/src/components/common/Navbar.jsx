@@ -57,6 +57,7 @@ export default function Navbar({ onOpenAIAssistant }) {
 
   const handleLogout = () => {
     localStorage.removeItem('clubverse_user');
+    localStorage.removeItem('clubverse_token');
     window.location.reload();
   };
 

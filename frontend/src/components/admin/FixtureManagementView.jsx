@@ -32,6 +32,25 @@ export default function FixtureManagementView({ triggerToast }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [fixtureToEdit, setFixtureToEdit] = useState(null);
   const [deleteConfig, setDeleteConfig] = useState({ isOpen: false, itemType: 'Fixture', itemName: '', itemToDelete: null });
+  const [generating, setGenerating] = useState(false);
+
+  const handleGenerateLeague = async () => {
+    try {
+      setGenerating(true);
+      const res = await fetch(`${API}/fixtures/generate-league`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message);
+      triggerToast(data.message || 'Season schedule generated!');
+      fetchData();
+    } catch (err) {
+      alert(err.message || 'Failed to generate season schedule.');
+    } finally {
+      setGenerating(false);
+    }
+  };
 
   const fetchData = async () => {
     try {
@@ -260,6 +279,18 @@ export default function FixtureManagementView({ triggerToast }) {
             title="Refresh Fixtures"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-[#7A8B5A]' : ''}`} />
+          </motion.button>
+
+          <motion.button
+            whileHover={{ scale: teams.length < 2 || generating ? 1 : 1.03 }}
+            whileTap={{ scale: teams.length < 2 || generating ? 1 : 0.97 }}
+            onClick={handleGenerateLeague}
+            disabled={teams.length < 2 || generating}
+            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold bg-[#BEF264] text-[#20221F] hover:bg-[#a9d949] shadow-warm-xs transition-all whitespace-nowrap disabled:opacity-50"
+            title="Generate full season round-robin fixtures across all registered teams"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-[#20221F]" />
+            <span>{generating ? 'Generating Schedule...' : 'Auto-Generate Season'}</span>
           </motion.button>
 
           <motion.button
