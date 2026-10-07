@@ -17,56 +17,71 @@ import {
 } from 'lucide-react';
 
 export default function PlayerOverviewView({ 
-  playerStats = {
-    goals: 14,
-    assists: 9,
-    passAccuracy: '88.5%',
-    matchRating: '8.6',
-    appearances: 22,
-    minutesPlayed: 1840
-  },
+  currentUser = {},
+  fixtures = [],
   onNavigateToTab
 }) {
-  const upcomingMatch = {
-    opponent: 'Manchester City',
-    competition: 'Premier League • Matchday 28',
-    date: 'Sunday, Aug 12, 2026',
-    time: '16:30 BST',
-    stadium: 'Spotify Arena • Main Pitch',
-    status: 'Starting XI Confirmed',
-    homeOrAway: 'Home'
-  };
+  const completedFixtures = (fixtures || []).filter((f) => f.status === 'Completed');
+  const upcomingFixturesList = (fixtures || []).filter((f) => f.status !== 'Completed');
 
-  const nextTraining = {
-    title: 'High-Press & Tactical Transition',
-    date: 'Tomorrow, 09:30 AM',
-    pitch: 'Pitch 1 (First Team Training Ground)',
-    coach: 'Mikel Arteta',
-    duration: '120 mins',
-    attendance: 'Confirmed Present'
-  };
+  const totalMatchesPlayed = completedFixtures.length;
+  const playerGoals = currentUser.goals ?? 0;
+  const playerAssists = currentUser.assists ?? 0;
+  const playerRating = currentUser.rating !== undefined && currentUser.rating !== null && Number(currentUser.rating) > 0 
+    ? Number(currentUser.rating).toFixed(1) 
+    : '0.0';
+
+  const nextFixture = upcomingFixturesList[0];
+  let nextOpponentName = 'Opponent';
+  let isHomeMatch = true;
+  let competitionName = 'Premier League';
+  let matchDateStr = 'TBD';
+  let matchTimeStr = '20:00 BST';
+  let stadiumStr = 'ClubVerse Arena';
+
+  if (nextFixture) {
+    const homeName = nextFixture.home_team?.name || (typeof nextFixture.home_team === 'string' ? nextFixture.home_team : 'ClubVerse FC');
+    const awayName = nextFixture.away_team?.name || (typeof nextFixture.away_team === 'string' ? nextFixture.away_team : 'Opponent');
+    const isHomeCV = homeName.toLowerCase().includes('clubverse') || homeName.toLowerCase().includes('cvfc');
+
+    if (isHomeCV) {
+      nextOpponentName = awayName;
+      isHomeMatch = true;
+    } else {
+      nextOpponentName = homeName;
+      isHomeMatch = false;
+    }
+
+    if (nextFixture.competition) competitionName = nextFixture.competition;
+    if (nextFixture.match_date) {
+      const d = new Date(nextFixture.match_date);
+      if (!isNaN(d.getTime())) matchDateStr = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+    }
+    if (nextFixture.match_time) matchTimeStr = nextFixture.match_time;
+    if (nextFixture.venue) stadiumStr = nextFixture.venue;
+  }
 
   const clubNews = [
     {
       id: 1,
-      title: 'Squad Selection Announced for Manchester City Clash',
-      date: 'Today, 08:00 AM',
+      title: `Squad Selection Announced for ${nextOpponentName} Clash`,
+      date: 'Today',
       category: 'Match Briefing',
-      summary: 'Tactical lineup confirmed. High press intensity drills set for tomorrow morning.'
+      summary: `Tactical lineup confirmed for fixture vs ${nextOpponentName}. High press intensity drills set for squad.`
     },
     {
       id: 2,
-      title: 'Medical Team Clears First Team Winger for Matchday 28',
+      title: `Medical Clearance: ${currentUser.full_name || currentUser.name || 'Player'} Fully Fit`,
       date: 'Yesterday',
       category: 'Fitness Report',
-      summary: 'Full recovery test passed with 100% sprint capability logged by GPS tracking.'
+      summary: `Medical status logged at ${currentUser.medical_clearance || '100% Match Fit'}. Ready for upcoming matchday selection.`
     },
     {
       id: 3,
-      title: 'ClubVerse AI Performance Benchmarks Updated',
-      date: '3 days ago',
+      title: 'Official Match Performance Ratings Updated',
+      date: 'Recent',
       category: 'Analytics',
-      summary: 'Pass accuracy & expected assist (xA) metrics updated following last weekend win.'
+      summary: 'Admin match ratings and goal/assist statistics updated following completed fixtures in database.'
     }
   ];
 
@@ -85,10 +100,10 @@ export default function PlayerOverviewView({
           </div>
           <div>
             <h2 className="font-serif font-black text-lg sm:text-xl">
-              Matchday Focus: Starting XI Selected
+              Matchday Focus: {currentUser.full_name || currentUser.name || 'Player'}
             </h2>
             <p className="text-xs text-white/80">
-              Next fixture vs Manchester City at Spotify Arena. Keep focus high during tomorrow's session!
+              {nextFixture ? `Next fixture vs ${nextOpponentName} (${isHomeMatch ? 'Home' : 'Away'}) at ${stadiumStr}.` : 'Squad preparation on track. Ready for upcoming matchday selection.'}
             </p>
           </div>
         </div>
@@ -118,40 +133,40 @@ export default function PlayerOverviewView({
               <span className="font-serif font-black text-sm text-[#20221F]">Upcoming Match</span>
             </div>
             <span className="px-3 py-1 rounded-full bg-[#7A8B5A]/15 text-[#627146] text-[10px] font-extrabold uppercase tracking-wider">
-              {upcomingMatch.homeOrAway} Fixture
+              {isHomeMatch ? 'Home Fixture' : 'Away Fixture'}
             </span>
           </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-[#F7F5EF] p-5 rounded-2xl border border-[#E4E1D8]">
             <div className="text-center sm:text-left space-y-1">
               <div className="text-[11px] font-extrabold text-[#7A8B5A] uppercase tracking-wider">
-                {upcomingMatch.competition}
+                {competitionName}
               </div>
               <h3 className="font-serif font-black text-2xl text-[#20221F]">
-                ClubVerse FC <span className="text-[#6F716B] font-light">vs</span> {upcomingMatch.opponent}
+                ClubVerse FC <span className="text-[#6F716B] font-light">vs</span> {nextOpponentName}
               </h3>
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 text-xs text-[#6F716B] pt-1">
                 <span className="flex items-center gap-1 font-semibold">
                   <Calendar className="w-3.5 h-3.5 text-[#7A8B5A]" />
-                  {upcomingMatch.date}
+                  {matchDateStr}
                 </span>
                 <span className="flex items-center gap-1 font-semibold">
                   <Clock className="w-3.5 h-3.5 text-[#7A8B5A]" />
-                  {upcomingMatch.time}
+                  {matchTimeStr}
                 </span>
               </div>
             </div>
 
             <div className="px-4 py-2.5 rounded-2xl bg-[#20221F] text-white text-center shadow-warm-sm flex-shrink-0">
               <div className="text-[10px] font-bold text-[#BEF264] uppercase">Status</div>
-              <div className="text-xs font-black">{upcomingMatch.status}</div>
+              <div className="text-xs font-black">Starting XI Ready</div>
             </div>
           </div>
 
           <div className="flex items-center justify-between text-xs text-[#6F716B] pt-1">
             <span className="flex items-center gap-1.5">
               <MapPin className="w-4 h-4 text-[#7A8B5A]" />
-              {upcomingMatch.stadium}
+              {stadiumStr}
             </span>
             <button 
               onClick={() => onNavigateToTab && onNavigateToTab('matches')}
@@ -180,19 +195,19 @@ export default function PlayerOverviewView({
           </div>
 
           <div className="space-y-2 bg-[#F7F5EF] p-4 rounded-2xl border border-[#E4E1D8]">
-            <h4 className="font-bold text-sm text-[#20221F]">{nextTraining.title}</h4>
+            <h4 className="font-bold text-sm text-[#20221F]">High-Press & Tactical Transition</h4>
             <div className="space-y-1 text-xs text-[#6F716B]">
               <div className="flex items-center gap-1.5">
                 <Clock className="w-3.5 h-3.5 text-[#7A8B5A]" />
-                <span>{nextTraining.date} ({nextTraining.duration})</span>
+                <span>Tomorrow, 09:30 AM (120 mins)</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <MapPin className="w-3.5 h-3.5 text-[#7A8B5A]" />
-                <span>{nextTraining.pitch}</span>
+                <span>Pitch 1 (First Team Training Ground)</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <UserCheck className="w-3.5 h-3.5 text-[#7A8B5A]" />
-                <span>Head Coach: {nextTraining.coach}</span>
+                <span>Head Coach Command</span>
               </div>
             </div>
           </div>
@@ -200,7 +215,7 @@ export default function PlayerOverviewView({
           <div className="pt-1 flex items-center justify-between text-xs">
             <span className="text-emerald-700 font-bold flex items-center gap-1">
               <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-              {nextTraining.attendance}
+              Confirmed Present
             </span>
             <button 
               onClick={() => onNavigateToTab && onNavigateToTab('training')}
@@ -212,7 +227,7 @@ export default function PlayerOverviewView({
         </motion.div>
       </div>
 
-      {/* Row 2: Personal Performance Summary (4 Metric Cards) */}
+      {/* Row 2: Personal Performance Summary (4 Dynamic Metric Cards) */}
       <div className="space-y-3">
         <h3 className="font-serif font-black text-lg text-[#20221F] flex items-center gap-2">
           <TrendingUp className="w-5 h-5 text-[#7A8B5A]" />
@@ -232,8 +247,8 @@ export default function PlayerOverviewView({
                 <Target className="w-4 h-4" />
               </div>
             </div>
-            <div className="font-serif font-black text-3xl text-[#20221F]">{playerStats.goals}</div>
-            <div className="text-[11px] text-[#7A8B5A] font-bold">Top Squad Scorer</div>
+            <div className="font-serif font-black text-3xl text-[#20221F]">{playerGoals}</div>
+            <div className="text-[11px] text-[#7A8B5A] font-bold">Official Season Goals</div>
           </motion.div>
 
           {/* Stat 2: Assists */}
@@ -247,23 +262,23 @@ export default function PlayerOverviewView({
                 <Award className="w-4 h-4" />
               </div>
             </div>
-            <div className="font-serif font-black text-3xl text-[#20221F]">{playerStats.assists}</div>
-            <div className="text-[11px] text-[#7A8B5A] font-bold">Key Playmaker</div>
+            <div className="font-serif font-black text-3xl text-[#20221F]">{playerAssists}</div>
+            <div className="text-[11px] text-[#7A8B5A] font-bold">Official Key Passes</div>
           </motion.div>
 
-          {/* Stat 3: Pass Accuracy */}
+          {/* Stat 3: Matches Played */}
           <motion.div 
             whileHover={{ y: -3 }}
             className="bg-[#FFFDF8] border border-[#E4E1D8] p-5 rounded-3xl shadow-warm-sm space-y-2 relative overflow-hidden"
           >
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-[#6F716B]">Pass Accuracy</span>
+              <span className="text-xs font-bold text-[#6F716B]">Matches Played</span>
               <div className="w-8 h-8 rounded-xl bg-[#7A8B5A]/10 text-[#7A8B5A] flex items-center justify-center">
-                <Zap className="w-4 h-4" />
+                <Trophy className="w-4 h-4" />
               </div>
             </div>
-            <div className="font-serif font-black text-3xl text-[#20221F]">{playerStats.passAccuracy}</div>
-            <div className="text-[11px] text-[#7A8B5A] font-bold">+3.2% vs last season</div>
+            <div className="font-serif font-black text-3xl text-[#20221F]">{totalMatchesPlayed}</div>
+            <div className="text-[11px] text-[#7A8B5A] font-bold">Completed Season Fixtures</div>
           </motion.div>
 
           {/* Stat 4: Match Rating */}
@@ -277,8 +292,8 @@ export default function PlayerOverviewView({
                 ★
               </div>
             </div>
-            <div className="font-serif font-black text-3xl text-[#20221F]">{playerStats.matchRating}<span className="text-xs font-normal text-[#6F716B]">/10</span></div>
-            <div className="text-[11px] text-[#7A8B5A] font-bold">Consistent MVP</div>
+            <div className="font-serif font-black text-3xl text-[#20221F]">{playerRating}<span className="text-xs font-normal text-[#6F716B]">/10</span></div>
+            <div className="text-[11px] text-[#7A8B5A] font-bold">Official Admin Rating</div>
           </motion.div>
 
         </div>

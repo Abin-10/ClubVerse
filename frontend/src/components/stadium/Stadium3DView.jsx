@@ -337,9 +337,19 @@ export default function Stadium3DView({
               </div>
             </div>
 
-            <div className="pt-3 border-t border-[#E4E1D8] flex items-center justify-between text-xs">
-              <span className="text-[#6F716B] font-semibold">Total Seats</span>
-              <span className="font-serif font-black text-[#20221F] text-sm">250 Seats</span>
+            <div className="pt-3 border-t border-[#E4E1D8] space-y-1 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-[#6F716B] font-semibold">Total Capacity</span>
+                <span className="font-serif font-black text-[#20221F] text-sm">250 Seats</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-[#6F716B] font-semibold">Booked / Reserved</span>
+                <span className="font-bold text-red-600 text-xs">{bookedSeatIds.length} Seats</span>
+              </div>
+              <div className="flex items-center justify-between pt-1 border-t border-dashed border-[#E4E1D8]">
+                <span className="text-[#20221F] font-bold">Seats Available</span>
+                <span className="font-serif font-black text-[#22C55E] text-sm">{Math.max(0, 250 - bookedSeatIds.length)} Seats</span>
+              </div>
             </div>
           </div>
 

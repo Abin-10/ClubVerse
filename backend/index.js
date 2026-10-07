@@ -496,9 +496,9 @@ app.put('/api/user/profile', async (req, res) => {
 
         for (const post of matchingPosts) {
           let isModified = false;
-          const matchesAuthor = userIdentifiers.includes(post.author_id) || 
-                                post.author_name === user.full_name || 
-                                (name && post.author_name === name);
+          const matchesAuthor = userIdentifiers.includes(post.author_id) ||
+            post.author_name === user.full_name ||
+            (name && post.author_name === name);
 
           if (matchesAuthor) {
             if (profile_image !== undefined) post.author_avatar = profile_image;
@@ -508,9 +508,9 @@ app.put('/api/user/profile', async (req, res) => {
 
           if (Array.isArray(post.comments)) {
             for (const cmt of post.comments) {
-              const matchesCmt = userIdentifiers.includes(cmt.author_id) || 
-                                 cmt.author_name === user.full_name || 
-                                 (name && cmt.author_name === name);
+              const matchesCmt = userIdentifiers.includes(cmt.author_id) ||
+                cmt.author_name === user.full_name ||
+                (name && cmt.author_name === name);
               if (matchesCmt) {
                 if (profile_image !== undefined) cmt.author_avatar = profile_image;
                 if (name) cmt.author_name = name;
@@ -644,7 +644,7 @@ app.post('/api/auth/send-otp', async (req, res) => {
       console.log(`⚠️ SMTP transporter fallback. OTP for ${cleanEmail} is: ${otpCode}`);
     }
 
-    res.json({ 
+    res.json({
       message: `Verification OTP has been sent to your email (${cleanEmail}). Please check your inbox and spam folder!`,
       email: cleanEmail
     });
@@ -1045,12 +1045,81 @@ app.get('/api/admin/stats', async (req, res) => {
   }
 });
 
+// Helper function to calculate player statistics from DB
+const computePlayerStatsFromDB = async (players) => {
+  try {
+    if (!Array.isArray(players) || players.length === 0) return players || [];
+    let fixtures = [];
+    try {
+      fixtures = await Fixture.find().populate('home_team', 'name short_name').populate('away_team', 'name short_name').lean();
+    } catch (fErr) {
+      console.warn('Fetch fixtures in computePlayerStatsFromDB warning:', fErr.message);
+      fixtures = await Fixture.find().lean();
+    }
+
+    const clubVerseCompletedMatchesCount = fixtures.filter(fix => {
+      if (fix.status !== 'Completed') return false;
+      const homeName = (fix.home_team?.name || fix.home_team || '').toString().toLowerCase();
+      const homeShort = (fix.home_team?.short_name || '').toString().toUpperCase();
+      const awayName = (fix.away_team?.name || fix.away_team || '').toString().toLowerCase();
+      const awayShort = (fix.away_team?.short_name || '').toString().toUpperCase();
+      return homeShort === 'CVFC' || homeName.includes('clubverse') || awayShort === 'CVFC' || awayName.includes('clubverse');
+    }).length;
+
+    return players.map(p => {
+      if (!p) return p;
+      const pidStr = p._id ? p._id.toString() : '';
+      const pNameLower = (p.full_name || '').toLowerCase();
+      let dbGoals = p.goals || 0;
+      let dbAssists = p.assists || 0;
+      let perfMatchesCount = 0;
+      let ratingSum = 0;
+      let ratingCount = 0;
+
+      fixtures.forEach(fix => {
+        if (fix.player_performances && Array.isArray(fix.player_performances)) {
+          const perf = fix.player_performances.find(
+            item => (item.player_id && item.player_id.toString() === pidStr) ||
+                    (item.player_name && item.player_name.toLowerCase() === pNameLower)
+          );
+          if (perf) {
+            perfMatchesCount += 1;
+            dbGoals += (perf.goals || 0);
+            dbAssists += (perf.assists || 0);
+            if (perf.rating && perf.rating > 0) {
+              ratingSum += perf.rating;
+              ratingCount += 1;
+            }
+          }
+        }
+      });
+
+      const avgRating = ratingCount > 0 ? (ratingSum / ratingCount).toFixed(1) : (p.rating || 0);
+      const totalMatches = Math.max(perfMatchesCount, clubVerseCompletedMatchesCount, p.matches || 0);
+
+      return {
+        ...p,
+        goals: dbGoals,
+        assists: dbAssists,
+        matches: totalMatches,
+        rating: Number(avgRating)
+      };
+    });
+  } catch (err) {
+    console.error('computePlayerStatsFromDB error:', err.message);
+    return players || [];
+  }
+};
+
 // GET All Players (Public / Fan Endpoint)
 app.get('/api/players', async (req, res) => {
   try {
-    const players = await Player.find().sort({ createdAt: -1 });
-    res.json(players);
+    await seedInitialData();
+    const players = await Player.find().sort({ createdAt: -1 }).lean();
+    const result = await computePlayerStatsFromDB(players);
+    res.json(result);
   } catch (err) {
+    console.error('GET /api/players error:', err);
     res.status(500).json({ message: err.message || 'Failed to fetch players' });
   }
 });
@@ -1058,9 +1127,12 @@ app.get('/api/players', async (req, res) => {
 // GET All Players (Admin Endpoint)
 app.get('/api/admin/players', async (req, res) => {
   try {
-    const players = await Player.find().sort({ createdAt: -1 });
-    res.json(players);
+    await seedInitialData();
+    const players = await Player.find().sort({ createdAt: -1 }).lean();
+    const result = await computePlayerStatsFromDB(players);
+    res.json(result);
   } catch (err) {
+    console.error('GET /api/admin/players error:', err);
     res.status(500).json({ message: err.message || 'Failed to fetch players' });
   }
 });
@@ -1068,14 +1140,14 @@ app.get('/api/admin/players', async (req, res) => {
 // POST Add New Player
 app.post('/api/admin/players', async (req, res) => {
   try {
-    const { 
-      full_name, 
-      email, 
-      position, 
-      jersey_number, 
-      date_of_birth, 
-      phone, 
-      nationality, 
+    const {
+      full_name,
+      email,
+      position,
+      jersey_number,
+      date_of_birth,
+      phone,
+      nationality,
       preferred_foot,
       height,
       weight,
@@ -1084,8 +1156,8 @@ app.post('/api/admin/players', async (req, res) => {
       market_value,
       medical_clearance,
       bio,
-      profile_image, 
-      status 
+      profile_image,
+      status
     } = req.body;
 
     if (!full_name || !position) {
@@ -1185,14 +1257,14 @@ app.post('/api/admin/players', async (req, res) => {
 // PUT Edit Player
 app.put('/api/admin/players/:id', async (req, res) => {
   try {
-    const { 
-      full_name, 
-      email, 
-      position, 
-      jersey_number, 
-      date_of_birth, 
-      phone, 
-      nationality, 
+    const {
+      full_name,
+      email,
+      position,
+      jersey_number,
+      date_of_birth,
+      phone,
+      nationality,
       preferred_foot,
       height,
       weight,
@@ -1201,8 +1273,8 @@ app.put('/api/admin/players/:id', async (req, res) => {
       market_value,
       medical_clearance,
       bio,
-      profile_image, 
-      status 
+      profile_image,
+      status
     } = req.body;
 
     const updatedPlayer = await Player.findByIdAndUpdate(
@@ -1527,26 +1599,26 @@ app.get('/api/stadium-bookings', async (req, res) => {
 // Create a new stadium booking (saved directly to MongoDB)
 app.post('/api/stadium-bookings', async (req, res) => {
   try {
-    const { 
-      stadium_id, 
-      stadium_name, 
-      stadium_image, 
-      location, 
-      user_id, 
-      user_name, 
-      user_email, 
-      user_phone, 
-      team_name, 
-      special_notes, 
-      booking_date, 
+    const {
+      stadium_id,
+      stadium_name,
+      stadium_image,
+      location,
+      user_id,
+      user_name,
+      user_email,
+      user_phone,
+      team_name,
+      special_notes,
+      booking_date,
       match_title,
       selected_seats,
       total_seats,
-      time_slot, 
-      duration_hours, 
-      hourly_rate, 
-      total_price, 
-      payment_method 
+      time_slot,
+      duration_hours,
+      hourly_rate,
+      total_price,
+      payment_method
     } = req.body;
 
     if (!stadium_id || !booking_date || !user_name || !user_email || !total_price) {
@@ -1773,17 +1845,17 @@ app.get('/api/stadiums', async (req, res) => {
 // POST create new stadium (Admin)
 app.post('/api/stadiums', async (req, res) => {
   try {
-    const { 
-      name, 
-      location, 
-      capacity, 
-      price_per_hour, 
-      availability_status, 
-      image, 
-      gallery, 
-      description, 
-      pitch_type, 
-      dimensions, 
+    const {
+      name,
+      location,
+      capacity,
+      price_per_hour,
+      availability_status,
+      image,
+      gallery,
+      description,
+      pitch_type,
+      dimensions,
       facilities,
       blocked_dates,
       seating_tiers
@@ -1973,10 +2045,10 @@ async function generateLeagueSchedule(forceRecreate = false) {
 
   const times = ['15:00 BST', '17:30 BST', '20:00 BST', '19:45 BST', '16:30 BST'];
   const formations = [
-    '4-3-3 High Press', 
-    '4-2-3-1 Mid-Block', 
-    '3-5-2 Counter Attack', 
-    '4-4-2 Diamond', 
+    '4-3-3 High Press',
+    '4-2-3-1 Mid-Block',
+    '3-5-2 Counter Attack',
+    '4-4-2 Diamond',
     '4-1-4-1 Control Possession'
   ];
   const coachNotesList = [
@@ -2173,15 +2245,16 @@ app.put('/api/fixtures/:id', async (req, res) => {
     const fixture = await Fixture.findById(id);
     if (!fixture) return res.status(404).json({ message: 'Fixture not found.' });
 
-    const { home_team, away_team, match_date, match_time, venue, status, home_score, away_score } = req.body;
+    const { home_team, away_team, match_date, match_time, venue, status, home_score, away_score, player_performances } = req.body;
     if (home_team) fixture.home_team = home_team;
     if (away_team) fixture.away_team = away_team;
     if (match_date) fixture.match_date = new Date(match_date);
     if (match_time) fixture.match_time = match_time;
     if (venue) fixture.venue = venue;
     if (status) fixture.status = status;
-    if (home_score !== undefined) fixture.home_score = home_score;
-    if (away_score !== undefined) fixture.away_score = away_score;
+    if (home_score !== undefined) fixture.home_score = Number(home_score);
+    if (away_score !== undefined) fixture.away_score = Number(away_score);
+    if (player_performances !== undefined) fixture.player_performances = player_performances;
 
     if (fixture.home_team.toString() === fixture.away_team.toString()) {
       return res.status(400).json({ message: 'Home and away teams must be different.' });
@@ -2215,6 +2288,23 @@ app.delete('/api/fixtures/:id', async (req, res) => {
 // ============================================================
 // TICKET BOOKING ROUTES (Fan)
 // ============================================================
+
+// GET booked seat counts for all fixtures
+app.get('/api/tickets/counts', async (req, res) => {
+  try {
+    const counts = await Ticket.aggregate([
+      { $match: { ticket_status: 'Booked' } },
+      { $group: { _id: '$fixture_id', bookedCount: { $sum: 1 } } }
+    ]);
+    const map = {};
+    counts.forEach(c => {
+      if (c._id) map[c._id.toString()] = c.bookedCount;
+    });
+    res.json({ success: true, counts: map });
+  } catch (err) {
+    res.status(500).json({ message: err.message || 'Failed to fetch ticket counts.' });
+  }
+});
 
 // GET booked seats for a specific fixture
 app.get('/api/tickets/fixture/:fixtureId', async (req, res) => {
@@ -2430,12 +2520,31 @@ app.get('/api/tickets/user/:userId', async (req, res) => {
   }
 });
 
+// GET all match ticket bookings (Admin endpoint)
+app.get('/api/admin/tickets', async (req, res) => {
+  try {
+    const tickets = await Ticket.find()
+      .populate({
+        path: 'fixture_id',
+        populate: [
+          { path: 'home_team', select: 'name short_name logo_color logo_url' },
+          { path: 'away_team', select: 'name short_name logo_color logo_url' }
+        ]
+      })
+      .sort({ booking_date: -1 });
+    res.json({ success: true, tickets });
+  } catch (err) {
+    res.status(500).json({ message: err.message || 'Failed to fetch admin tickets.' });
+  }
+});
+
 // CANCEL a ticket
 app.put('/api/tickets/:id/cancel', async (req, res) => {
   try {
     const { id } = req.params;
     const ticket = await Ticket.findById(id);
     if (!ticket) return res.status(404).json({ message: 'Ticket not found.' });
+    ticket.ticket_status = 'Cancelled';
     await ticket.save();
     res.json({ success: true, message: 'Ticket cancelled successfully.', ticket });
   } catch (err) {

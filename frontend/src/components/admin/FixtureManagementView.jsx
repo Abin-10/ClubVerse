@@ -474,6 +474,39 @@ export default function FixtureManagementView({ triggerToast }) {
 
                   </div>
 
+                  {/* Player Stats Highlights (Goals, Assists, Ratings - Only for ClubVerse matches) */}
+                  {(() => {
+                    const isCVMatch = Boolean(
+                      fix.home_team?.short_name?.toUpperCase() === 'CVFC' || (fix.home_team?.name || '').toLowerCase().includes('clubverse') ||
+                      fix.away_team?.short_name?.toUpperCase() === 'CVFC' || (fix.away_team?.name || '').toLowerCase().includes('clubverse')
+                    );
+                    if (!isCVMatch || !fix.player_performances || !fix.player_performances.some(p => p.goals > 0 || p.assists > 0 || (p.rating && p.rating > 0))) {
+                      return null;
+                    }
+                    return (
+                      <div className="pt-2 flex flex-wrap items-center gap-2 border-t border-[#E4E1D8]/40 text-xs z-10 relative">
+                        {fix.player_performances.filter(p => p.goals > 0).length > 0 && (
+                          <span className="px-2.5 py-1 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 font-bold flex items-center gap-1 text-[11px]">
+                            <span>⚽ Goals:</span>
+                            <span>{fix.player_performances.filter(p => p.goals > 0).map(g => `${g.player_name} (${g.goals})`).join(', ')}</span>
+                          </span>
+                        )}
+                        {fix.player_performances.filter(p => p.assists > 0).length > 0 && (
+                          <span className="px-2.5 py-1 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 font-bold flex items-center gap-1 text-[11px]">
+                            <span>🅰️ Assists:</span>
+                            <span>{fix.player_performances.filter(p => p.assists > 0).map(a => `${a.player_name} (${a.assists})`).join(', ')}</span>
+                          </span>
+                        )}
+                        {fix.player_performances.filter(p => p.rating && p.rating >= 8.0).length > 0 && (
+                          <span className="px-2.5 py-1 rounded-xl bg-purple-50 border border-purple-200 text-purple-800 font-bold flex items-center gap-1 text-[11px]">
+                            <span>⭐ Top Rated:</span>
+                            <span>{fix.player_performances.filter(p => p.rating >= 8.0).map(r => `${r.player_name} (${r.rating})`).join(', ')}</span>
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })()}
+
                   {/* Match Details Footer Strip */}
                   <div className="flex flex-wrap items-center justify-between gap-4 pt-3 border-t border-[#E4E1D8]/60 text-xs font-medium z-10 relative">
                     <div className="flex flex-wrap items-center gap-4">

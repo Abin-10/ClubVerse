@@ -23,8 +23,9 @@ export default function CoachDashboardPage() {
   const [isCreateTrainingModalOpen, setIsCreateTrainingModalOpen] = useState(false);
   const [isEditProfileModalOpen, setIsEditProfileModalOpen] = useState(false);
 
-  // Players state from backend
+  // Players & Fixtures state from backend
   const [players, setPlayers] = useState([]);
+  const [fixtures, setFixtures] = useState([]);
 
   // ── Auth user from localStorage (identity / role) ──────────────────────────
   const authUser = JSON.parse(localStorage.getItem('clubverse_user') || 'null');
@@ -65,12 +66,17 @@ export default function CoachDashboardPage() {
       .catch((err) => console.warn('Coach profile fetch:', err.message));
   }, []);
 
-  // Fetch squad players from backend for CoachPlayerManagementView
+  // Fetch squad players and fixtures from backend for Coach Dashboard
   useEffect(() => {
     fetch('http://localhost:5000/api/admin/players')
       .then((res) => res.json())
       .then((data) => { if (Array.isArray(data)) setPlayers(data); })
       .catch((err) => console.warn('Squad fetch:', err.message));
+
+    fetch('http://localhost:5000/api/fixtures')
+      .then((res) => res.json())
+      .then((data) => { if (Array.isArray(data)) setFixtures(data); })
+      .catch((err) => console.warn('Fixtures fetch:', err.message));
   }, []);
 
   const triggerToast = (msg) => {
@@ -113,6 +119,7 @@ export default function CoachDashboardPage() {
                   onNavigateToTab={(tab) => setActiveTab(tab)}
                   onCreateTrainingClick={() => setIsCreateTrainingModalOpen(true)}
                   players={players}
+                  fixtures={fixtures}
                 />
               </motion.div>
             )}
@@ -162,7 +169,7 @@ export default function CoachDashboardPage() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
               >
-                <CoachPerformanceView players={players} />
+                <CoachPerformanceView players={players} fixtures={fixtures} />
               </motion.div>
             )}
 

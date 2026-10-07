@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Users, Search, Edit, Eye, Filter, CheckCircle2, ShieldCheck, Activity, Award } from 'lucide-react';
 import CoachPlayerDetailModal from './CoachPlayerDetailModal';
-import UpdatePerformanceModal from './UpdatePerformanceModal';
 
 export default function CoachPlayerManagementView({ 
   players = [], 
@@ -12,7 +11,6 @@ export default function CoachPlayerManagementView({
 }) {
   const [positionFilter, setPositionFilter] = useState('all');
   const [selectedPlayerForView, setSelectedPlayerForView] = useState(null);
-  const [selectedPlayerForEdit, setSelectedPlayerForEdit] = useState(null);
 
   // Fallback initial squad if backend list is loading/empty
   const squadList = players.length > 0 ? players : [
@@ -24,8 +22,7 @@ export default function CoachPlayerManagementView({
       jersey_number: 7,
       goals: 14,
       assists: 9,
-      passAccuracy: '88.5%',
-      matchRating: '8.6',
+      rating: 8.6,
       fitnessStatus: '100% Fit',
       profile_image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&auto=format&fit=crop&q=80',
       status: 'Active'
@@ -38,8 +35,7 @@ export default function CoachPlayerManagementView({
       jersey_number: 41,
       goals: 5,
       assists: 8,
-      passAccuracy: '91.2%',
-      matchRating: '8.4',
+      rating: 8.4,
       fitnessStatus: '100% Fit',
       profile_image: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=200&auto=format&fit=crop&q=80',
       status: 'Active'
@@ -52,8 +48,7 @@ export default function CoachPlayerManagementView({
       jersey_number: 2,
       goals: 2,
       assists: 1,
-      passAccuracy: '93.8%',
-      matchRating: '8.5',
+      rating: 8.5,
       fitnessStatus: '100% Fit',
       profile_image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
       status: 'Active'
@@ -66,8 +61,7 @@ export default function CoachPlayerManagementView({
       jersey_number: 22,
       goals: 0,
       assists: 1,
-      passAccuracy: '84.0%',
-      matchRating: '8.2',
+      rating: 8.2,
       fitnessStatus: '100% Fit',
       profile_image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
       status: 'Active'
@@ -93,7 +87,7 @@ export default function CoachPlayerManagementView({
             Player Management & Performance
           </h2>
           <p className="text-xs text-[#6F716B] mt-1">
-            View assigned squad players, profile details, and update individual match statistics.
+            View assigned squad players, profile details, and official admin ratings & match statistics.
           </p>
         </div>
 
@@ -135,7 +129,6 @@ export default function CoachPlayerManagementView({
                 <th className="py-3 px-4">Position</th>
                 <th className="py-3 px-4">Jersey #</th>
                 <th className="py-3 px-4">Goals / Assists</th>
-                <th className="py-3 px-4">Pass Acc.</th>
                 <th className="py-3 px-4">Rating</th>
                 <th className="py-3 px-4 text-right">Actions</th>
               </tr>
@@ -174,15 +167,10 @@ export default function CoachPlayerManagementView({
                     {player.goals || 0} G / {player.assists || 0} A
                   </td>
 
-                  {/* Pass Accuracy */}
-                  <td className="py-3.5 px-4 font-bold text-[#20221F]">
-                    {player.passAccuracy || '88.5%'}
-                  </td>
-
-                  {/* Rating */}
+                  {/* Rating (Official Admin Rating out of 10) */}
                   <td className="py-3.5 px-4">
-                    <span className="px-2.5 py-1 rounded-full bg-[#BEF264] text-[#20221F] font-black text-[11px]">
-                      ★ {player.matchRating || '8.5'}
+                    <span className="px-2.5 py-1 rounded-full bg-[#BEF264] text-[#20221F] font-black text-[11px] border border-[#7A8B5A]/30">
+                      ★ {player.rating !== undefined && player.rating !== null && Number(player.rating) > 0 ? Number(player.rating).toFixed(1) : '0.0'}
                     </span>
                   </td>
 
@@ -191,18 +179,11 @@ export default function CoachPlayerManagementView({
                     <div className="flex items-center justify-end gap-2">
                       <button
                         onClick={() => setSelectedPlayerForView(player)}
-                        className="p-2 rounded-xl bg-[#F7F5EF] hover:bg-[#EFEEE8] border border-[#E4E1D8] text-[#20221F] transition-colors"
-                        title="View Player Profile"
+                        className="px-3.5 py-1.5 rounded-xl bg-[#20221F] hover:bg-[#7A8B5A] text-white text-xs font-bold transition-all flex items-center gap-1.5 shadow-warm-xs"
+                        title="View Official Profile & Stats"
                       >
-                        <Eye className="w-4 h-4 text-[#7A8B5A]" />
-                      </button>
-
-                      <button
-                        onClick={() => setSelectedPlayerForEdit(player)}
-                        className="px-3 py-1.5 rounded-xl bg-[#20221F] hover:bg-[#7A8B5A] text-white text-[11px] font-bold shadow-warm-sm transition-all flex items-center gap-1.5"
-                      >
-                        <Edit className="w-3.5 h-3.5 text-[#BEF264]" />
-                        <span>Update Performance</span>
+                        <Eye className="w-3.5 h-3.5 text-[#BEF264]" />
+                        <span>View Profile</span>
                       </button>
                     </div>
                   </td>
@@ -220,18 +201,6 @@ export default function CoachPlayerManagementView({
         onClose={() => setSelectedPlayerForView(null)}
         player={selectedPlayerForView}
       />
-
-      {/* Update Performance Modal */}
-      <UpdatePerformanceModal 
-        isOpen={Boolean(selectedPlayerForEdit)}
-        onClose={() => setSelectedPlayerForEdit(null)}
-        player={selectedPlayerForEdit}
-        onSavePerformance={(updated) => {
-          if (onUpdatePerformance) onUpdatePerformance(updated);
-        }}
-        triggerToast={triggerToast}
-      />
-
     </div>
   );
 }

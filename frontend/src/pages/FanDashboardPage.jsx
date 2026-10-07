@@ -12,11 +12,12 @@ import StadiumBookingView from '../components/stadium/StadiumBookingView';
 import TicketBookingPage from '../components/stadium/TicketBookingPage';
 import CommunityView from '../components/community/CommunityView';
 import SquadView from '../components/squad/SquadView';
-import { 
-  WalletView, 
-  AnalyticsView, 
-  TicketsView, 
-  HelpView 
+import FanTicketDetailsDashboard from '../components/stadium/FanTicketDetailsDashboard';
+import {
+  WalletView,
+  AnalyticsView,
+  TicketsView,
+  HelpView
 } from '../components/dashboard/FanSidebarViews';
 import TicketBookingModal from '../components/modals/TicketBookingModal';
 
@@ -139,7 +140,7 @@ export default function FanDashboardPage() {
       {/* Right Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 pl-16 sm:pl-20">
         {/* Header */}
-        <DashboardHeader 
+        <DashboardHeader
           currentUser={currentUser}
           onAddPassClick={() => setIsTicketModalOpen(true)}
           onCreateReportClick={() => setShowReportModal(true)}
@@ -147,19 +148,19 @@ export default function FanDashboardPage() {
 
         {/* Dashboard Canvas Container */}
         <main className="p-4 sm:p-6 lg:p-8 max-w-[1600px] w-full mx-auto space-y-6 flex-1">
-          
+
           {/* Top Banner Alert / Welcome Toast */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             className="bg-gradient-to-r from-[#20221F] via-[#2E332B] to-[#7A8B5A] text-white p-4 rounded-3xl shadow-warm-md flex flex-wrap items-center justify-between gap-4 border border-white/10"
           >
             <div className="flex items-center gap-3">
               {currentUser && currentUser.profile_image ? (
-                <img 
-                  src={currentUser.profile_image} 
-                  alt="Avatar" 
-                  className="w-10 h-10 rounded-2xl object-cover border-2 border-[#BEF264]" 
+                <img
+                  src={currentUser.profile_image}
+                  alt="Avatar"
+                  className="w-10 h-10 rounded-2xl object-cover border-2 border-[#BEF264]"
                 />
               ) : (
                 <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center backdrop-blur-md">
@@ -177,7 +178,7 @@ export default function FanDashboardPage() {
           {/* DYNAMIC TAB VIEWS BASED ON SIDEBAR SELECTION */}
           <AnimatePresence mode="wait">
             {activeTab === 'overview' && (
-              <motion.div 
+              <motion.div
                 key="overview"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -193,8 +194,8 @@ export default function FanDashboardPage() {
 
                   {/* Widget 2: Virtual Wallet & Mint Green VISA Card */}
                   <div className="lg:col-span-6">
-                    <VirtualCardWidget 
-                      walletData={dashboardData?.wallet} 
+                    <VirtualCardWidget
+                      walletData={dashboardData?.wallet}
                       onTopUp={handleWalletTopUp}
                     />
                   </div>
@@ -214,8 +215,8 @@ export default function FanDashboardPage() {
 
                   {/* Widget 6: Live Fan Match Poll */}
                   <div className="lg:col-span-3">
-                    <FanPollWidget 
-                      pollData={dashboardData?.poll} 
+                    <FanPollWidget
+                      pollData={dashboardData?.poll}
                       onVote={handlePollVote}
                     />
                   </div>
@@ -243,7 +244,7 @@ export default function FanDashboardPage() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
               >
-                <FanSettingsView 
+                <FanSettingsView
                   currentUser={currentUser}
                   onUpdateUserData={(newUser) => setCurrentUser(newUser)}
                   triggerToast={triggerToast}
@@ -257,6 +258,17 @@ export default function FanDashboardPage() {
             {activeTab === 'booktickets' && (
               <motion.div key="booktickets" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
                 <TicketBookingPage currentUser={currentUser} triggerToast={triggerToast} />
+              </motion.div>
+            )}
+
+            {/* TAB: MY BOOKED TICKETS & DETAILS DASHBOARD */}
+            {activeTab === 'mytickets' && (
+              <motion.div key="mytickets" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
+                <FanTicketDetailsDashboard
+                  currentUser={currentUser}
+                  triggerToast={triggerToast}
+                  onNavigateToBooking={() => setActiveTab('booktickets')}
+                />
               </motion.div>
             )}
 
@@ -287,7 +299,7 @@ export default function FanDashboardPage() {
       {/* Floating Toast Notification */}
       <AnimatePresence>
         {toastMessage && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 50, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 50, scale: 0.9 }}
@@ -300,7 +312,7 @@ export default function FanDashboardPage() {
       </AnimatePresence>
 
       {/* Pass Booking Modal */}
-      <TicketBookingModal 
+      <TicketBookingModal
         isOpen={isTicketModalOpen}
         onClose={() => setIsTicketModalOpen(false)}
         ticketTier={{ id: 'vip-pass', name: 'Fan VIP Pass', price: 120 }}
@@ -310,13 +322,13 @@ export default function FanDashboardPage() {
       <AnimatePresence>
         {showReportModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               className="bg-[#FFFDF8] border border-[#E4E1D8] rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-warm-lg space-y-5 relative"
             >
-              <button 
+              <button
                 onClick={() => setShowReportModal(false)}
                 className="absolute top-4 right-4 p-2 text-[#6F716B] hover:text-[#20221F] rounded-full"
               >
@@ -344,7 +356,7 @@ export default function FanDashboardPage() {
                 </div>
               </div>
 
-              <motion.button 
+              <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => {

@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import CircularStadiumView from './CircularStadiumView';
 import RazorpayPaymentModal from './RazorpayPaymentModal';
+import FanTicketDetailsDashboard from './FanTicketDetailsDashboard';
 import { getTeamLogo, formatTimeTo12Hour, getBookingStatus, isPastFixture } from '../../utils/teamUtils';
 
 const API = 'http://localhost:5000/api';
@@ -42,7 +43,8 @@ const DEFAULT_MOCK_FIXTURES = [
   }
 ];
 
-export default function TicketBookingPage({ currentUser, triggerToast }) {
+export default function TicketBookingPage({ currentUser, triggerToast, initialViewMode = 'booking' }) {
+  const [viewMode, setViewMode] = useState(initialViewMode);
   const [step, setStep] = useState(1); // 1: Select Fixture, 2: Select Seats, 3: Confirm, 4: Success
   const [fixtures, setFixtures] = useState(DEFAULT_MOCK_FIXTURES);
   const [stadiums, setStadiums] = useState([]);
@@ -53,6 +55,29 @@ export default function TicketBookingPage({ currentUser, triggerToast }) {
   const [booking, setBooking] = useState(false);
   const [bookingResult, setBookingResult] = useState(null);
   const [showRazorpayModal, setShowRazorpayModal] = useState(false);
+
+  const [ticketCounts, setTicketCounts] = useState({});
+
+  const fetchTicketCounts = async () => {
+    try {
+      const res = await fetch(`${API}/tickets/counts`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.counts) {
+          setTicketCounts(data.counts);
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to fetch ticket counts:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchTicketCounts();
+    const handleUpdate = () => fetchTicketCounts();
+    window.addEventListener('clubverse_ticket_update', handleUpdate);
+    return () => window.removeEventListener('clubverse_ticket_update', handleUpdate);
+  }, [step]);
 
   const handleConfirmBooking = () => {
     if (!selectedFixture || selectedSeats.length === 0) return;
@@ -91,6 +116,8 @@ export default function TicketBookingPage({ currentUser, triggerToast }) {
       if (!res.ok) throw new Error(data.message || 'Booking recording failed');
       setBookingResult({ ...data, razorpay_payment_id: paymentId, payment_method: paymentMethod });
       setStep(4);
+      fetchTicketCounts();
+      window.dispatchEvent(new Event('clubverse_ticket_update'));
       triggerToast?.(`Payment Successful via Razorpay! ${data.tickets?.length || selectedSeats.length} seat(s) confirmed.`);
     } catch (err) {
       alert(err.message || 'Booking recording failed');
@@ -216,8 +243,60 @@ export default function TicketBookingPage({ currentUser, triggerToast }) {
     { num: 4, name: 'Pass Issued' }
   ];
 
+  if (viewMode === 'dashboard') {
+    return (
+      <div className="space-y-6 font-sans selection:bg-[#7A8B5A] selection:text-white">
+        {/* Top Navigation Mode Switcher Bar */}
+        <div className="flex items-center justify-between bg-white/90 backdrop-blur-md p-2 rounded-2xl border border-[#E4E1D8] shadow-warm-sm">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setViewMode('booking')}
+              className="px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 text-[#6F716B] hover:text-[#20221F] hover:bg-[#F7F5EF]"
+            >
+              <Ticket className="w-4 h-4 text-[#7A8B5A]" />
+              <span>Book Match Tickets</span>
+            </button>
+            <button
+              onClick={() => setViewMode('dashboard')}
+              className="px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 bg-[#20221F] text-white shadow-warm-xs"
+            >
+              <ShieldCheck className="w-4 h-4 text-[#BEF264]" />
+              <span>My Ticket Details Dashboard</span>
+            </button>
+          </div>
+        </div>
+
+        <FanTicketDetailsDashboard
+          currentUser={currentUser}
+          triggerToast={triggerToast}
+          onNavigateToBooking={() => setViewMode('booking')}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 font-sans selection:bg-[#7A8B5A] selection:text-white">
+      
+      {/* Top Navigation Mode Switcher Bar */}
+      <div className="flex items-center justify-between bg-white/90 backdrop-blur-md p-2 rounded-2xl border border-[#E4E1D8] shadow-warm-sm">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setViewMode('booking')}
+            className="px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 bg-[#20221F] text-white shadow-warm-xs"
+          >
+            <Ticket className="w-4 h-4 text-[#BEF264]" />
+            <span>Book Match Tickets</span>
+          </button>
+          <button
+            onClick={() => setViewMode('dashboard')}
+            className="px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 text-[#6F716B] hover:text-[#20221F] hover:bg-[#F7F5EF]"
+          >
+            <ShieldCheck className="w-4 h-4 text-[#7A8B5A]" />
+            <span>My Ticket Details Dashboard</span>
+          </button>
+        </div>
+      </div>
       
       {/* ── LUXURY PAGE HEADER & STEPPER ── */}
       <div className="p-6 rounded-3xl bg-white/90 backdrop-blur-md border border-[#E4E1D8] shadow-warm-md flex flex-wrap items-center justify-between gap-4">
@@ -312,6 +391,9 @@ export default function TicketBookingPage({ currentUser, triggerToast }) {
                 const awayColor = fix.away_team?.logo_color || '#DC052D';
                 const bookingStatus = getBookingStatus(fix.match_date, fix.match_time, fix.status);
                 const formattedTime = formatTimeTo12Hour(fix.match_time);
+                const TOTAL_CAPACITY = 250;
+                const bookedCount = ticketCounts[fix._id] || 0;
+                const availableSeats = Math.max(0, TOTAL_CAPACITY - bookedCount);
 
                 return (
                   <motion.div
@@ -319,12 +401,12 @@ export default function TicketBookingPage({ currentUser, triggerToast }) {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.08 }}
-                    onClick={() => bookingStatus.open && handleFixtureSelect(fix)}
+                    onClick={() => bookingStatus.open && availableSeats > 0 && handleFixtureSelect(fix)}
                     style={{
                       background: `linear-gradient(135deg, rgba(255,253,248,0.95) 0%, rgba(247,245,239,0.9) 100%)`
                     }}
                     className={`p-6 rounded-3xl border border-[#E4E1D8] shadow-warm-md transition-all duration-300 relative overflow-hidden group ${
-                      bookingStatus.open 
+                      bookingStatus.open && availableSeats > 0
                         ? 'hover:shadow-warm-xl hover:border-[#7A8B5A] cursor-pointer hover:-translate-y-1' 
                         : 'opacity-90 bg-[#F9F8F3]'
                     }`}
@@ -349,10 +431,17 @@ export default function TicketBookingPage({ currentUser, triggerToast }) {
                       </div>
                       
                       {bookingStatus.open ? (
-                        <div className="flex items-center gap-1.5 text-[11px] font-black text-[#22C55E]">
-                          <span className="w-2 h-2 rounded-full bg-[#22C55E] animate-pulse" />
-                          250 SEATS AVAILABLE
-                        </div>
+                        availableSeats > 0 ? (
+                          <div className="flex items-center gap-1.5 text-[11px] font-black text-[#22C55E]">
+                            <span className="w-2 h-2 rounded-full bg-[#22C55E] animate-pulse" />
+                            {availableSeats} SEATS AVAILABLE
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1.5 text-[11px] font-black text-red-600 bg-red-100 px-2.5 py-1 rounded-full border border-red-300">
+                            <span className="w-2 h-2 rounded-full bg-red-600" />
+                            SOLD OUT (0 SEATS AVAILABLE)
+                          </div>
+                        )
                       ) : (
                         <div className="flex items-center gap-1 text-[11px] font-black text-amber-700 bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/30">
                           <Lock className="w-3.5 h-3.5 text-amber-600" />
@@ -712,13 +801,24 @@ export default function TicketBookingPage({ currentUser, triggerToast }) {
               )}
             </div>
 
-            <button
-              type="button"
-              onClick={() => { setStep(1); setSelectedFixture(null); setSelectedSeats([]); }}
-              className="px-8 py-3.5 rounded-2xl bg-[#20221F] text-white font-black text-xs uppercase tracking-wider hover:bg-[#7A8B5A] transition-all shadow-warm-md"
-            >
-              Book Another Match
-            </button>
+            <div className="flex flex-wrap items-center justify-center gap-3 w-full pt-2">
+              <button
+                type="button"
+                onClick={() => setViewMode('dashboard')}
+                className="px-6 py-3.5 rounded-2xl bg-[#20221F] hover:bg-[#7A8B5A] text-white font-black text-xs uppercase tracking-wider transition-all shadow-warm-md flex items-center gap-2 cursor-pointer"
+              >
+                <ShieldCheck className="w-4 h-4 text-[#BEF264]" />
+                <span>View Ticket Details Dashboard</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => { setStep(1); setSelectedFixture(null); setSelectedSeats([]); setViewMode('booking'); }}
+                className="px-6 py-3.5 rounded-2xl bg-[#F7F5EF] border border-[#E4E1D8] text-[#20221F] font-black text-xs uppercase tracking-wider hover:bg-[#E4E1D8] transition-all cursor-pointer"
+              >
+                Book Another Match
+              </button>
+            </div>
           </motion.div>
         )}
 

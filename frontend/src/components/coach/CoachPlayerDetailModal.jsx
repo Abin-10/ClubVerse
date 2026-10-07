@@ -41,22 +41,20 @@ export default function CoachPlayerDetailModal({ isOpen, onClose, player }) {
           </div>
 
           {/* Stats Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+          <div className="grid grid-cols-3 gap-3 text-center">
             <div className="p-3 bg-[#F7F5EF] rounded-2xl border border-[#E4E1D8]">
               <div className="text-[10px] font-bold text-[#6F716B]">Goals</div>
-              <div className="font-serif font-black text-2xl text-[#20221F]">{player.goals || 12}</div>
+              <div className="font-serif font-black text-2xl text-[#20221F]">{player.goals ?? 0}</div>
             </div>
             <div className="p-3 bg-[#F7F5EF] rounded-2xl border border-[#E4E1D8]">
               <div className="text-[10px] font-bold text-[#6F716B]">Assists</div>
-              <div className="font-serif font-black text-2xl text-[#20221F]">{player.assists || 8}</div>
+              <div className="font-serif font-black text-2xl text-[#20221F]">{player.assists ?? 0}</div>
             </div>
             <div className="p-3 bg-[#F7F5EF] rounded-2xl border border-[#E4E1D8]">
-              <div className="text-[10px] font-bold text-[#6F716B]">Pass Acc.</div>
-              <div className="font-serif font-black text-2xl text-[#20221F]">{player.passAccuracy || '88%'}</div>
-            </div>
-            <div className="p-3 bg-[#F7F5EF] rounded-2xl border border-[#E4E1D8]">
-              <div className="text-[10px] font-bold text-[#6F716B]">Avg Rating</div>
-              <div className="font-serif font-black text-2xl text-[#20221F]">{player.matchRating || '8.5'}</div>
+              <div className="text-[10px] font-bold text-[#6F716B]">Admin Rating</div>
+              <div className="font-serif font-black text-2xl text-[#20221F]">
+                {player.rating !== undefined && player.rating !== null && Number(player.rating) > 0 ? Number(player.rating).toFixed(1) : '0.0'}
+              </div>
             </div>
           </div>
 

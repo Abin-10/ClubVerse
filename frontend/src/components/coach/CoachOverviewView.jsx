@@ -19,8 +19,8 @@ export default function CoachOverviewView({
   onNavigateToTab,
   onCreateTrainingClick,
   players = [],
+  fixtures = [],
   stats = {
-    upcomingMatches: 4,
     todaysTraining: 2,
     squadFitness: '96%'
   }
@@ -30,11 +30,33 @@ export default function CoachOverviewView({
   const maxCapacity = 24;
   const availableSlots = Math.max(0, maxCapacity - registeredCount);
 
+  // Compute upcoming fixtures count and next match details from DB fixtures
+  const upcomingFixturesList = (fixtures || []).filter((f) => f.status !== 'Completed');
+  const upcomingMatchesCount = upcomingFixturesList.length;
+
+  const nextFixture = upcomingFixturesList[0];
+  let nextOpponentName = 'Opponent';
+  let isHomeMatch = true;
+
+  if (nextFixture) {
+    const homeName = nextFixture.home_team?.name || (typeof nextFixture.home_team === 'string' ? nextFixture.home_team : 'ClubVerse FC');
+    const awayName = nextFixture.away_team?.name || (typeof nextFixture.away_team === 'string' ? nextFixture.away_team : 'Opponent');
+    const isHomeCV = homeName.toLowerCase().includes('clubverse') || homeName.toLowerCase().includes('cvfc');
+
+    if (isHomeCV) {
+      nextOpponentName = awayName;
+      isHomeMatch = true;
+    } else {
+      nextOpponentName = homeName;
+      isHomeMatch = false;
+    }
+  }
+
   const recentActivities = [
-    { id: 1, title: 'Starting XI Tactical Shape Confirmed', time: '10 mins ago', type: 'Match Tactics', desc: '4-3-3 High Pressing formation set for Sunday game vs Manchester City.' },
-    { id: 2, title: 'Player Performance Evaluated', time: '1 hour ago', type: 'Performance', desc: 'Bukayo Saka & Declan Rice match ratings updated after high-intensity drills.' },
+    { id: 1, title: 'Starting XI Tactical Shape Confirmed', time: '10 mins ago', type: 'Match Tactics', desc: `4-3-3 High Pressing formation set for next game vs ${nextOpponentName}.` },
+    { id: 2, title: 'Player Performance Evaluated', time: '1 hour ago', type: 'Performance', desc: 'Squad match ratings and goals/assists synced with DB.' },
     { id: 3, title: 'New Recovery Session Created', time: '3 hours ago', type: 'Training', desc: 'Hydrotherapy & foam rolling scheduled for Friday 10:00 AM.' },
-    { id: 4, title: 'Medical Clearance Approved', time: 'Yesterday', timeLabel: 'Physio', desc: `Physio team cleared ${activeCount}/${registeredCount} registered DB players for full matchday intensity.` }
+    { id: 4, title: 'Medical Clearance Approved', time: 'Yesterday', timeLabel: 'Physio', desc: `Physio team cleared ${activeCount}/${registeredCount || 1} registered DB players for full matchday intensity.` }
   ];
 
   return (
@@ -55,7 +77,7 @@ export default function CoachOverviewView({
               Head Coach Command Center
             </h2>
             <p className="text-xs text-white/80">
-              Squad preparation on track. Next derby match vs Manchester City in 4 days!
+              {nextFixture ? `Squad preparation on track. Next match vs ${nextOpponentName} (${isHomeMatch ? 'Home' : 'Away'})!` : 'Squad preparation on track. Ready for upcoming fixtures.'}
             </p>
           </div>
         </div>
@@ -112,8 +134,10 @@ export default function CoachOverviewView({
               <Trophy className="w-4 h-4" />
             </div>
           </div>
-          <div className="font-serif font-black text-3xl text-[#20221F]">{stats.upcomingMatches}</div>
-          <div className="text-[11px] text-[#7A8B5A] font-bold">Next: vs Man City (H)</div>
+          <div className="font-serif font-black text-3xl text-[#20221F]">{upcomingMatchesCount}</div>
+          <div className="text-[11px] text-[#7A8B5A] font-bold">
+            {nextFixture ? `Next: vs ${nextOpponentName} (${isHomeMatch ? 'H' : 'A'})` : 'No upcoming fixtures'}
+          </div>
         </motion.div>
 
         {/* Card 3: Today's Training */}

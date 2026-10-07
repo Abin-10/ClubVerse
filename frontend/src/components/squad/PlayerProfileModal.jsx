@@ -19,10 +19,12 @@ export default function PlayerProfileModal({ player, onClose }) {
   if (!player) return null;
 
   const photo = player.profile_image || 'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=400&auto=format&fit=crop&q=80';
-  const goals = player.goals ?? Math.floor(Math.random() * 15) + 5;
-  const assists = player.assists ?? Math.floor(Math.random() * 10) + 2;
-  const matches = player.matches ?? Math.floor(Math.random() * 12) + 18;
-  const rating = player.rating ?? (8.5 + (Math.random() * 1)).toFixed(1);
+  const goals = player.goals ?? 0;
+  const assists = player.assists ?? 0;
+  const matches = player.matches ?? 0;
+  const rating = (player.rating !== undefined && player.rating !== null && player.rating > 0)
+    ? Number(player.rating).toFixed(1) 
+    : '0.0';
 
   return (
     <AnimatePresence>

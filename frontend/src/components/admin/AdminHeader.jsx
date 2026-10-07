@@ -153,9 +153,7 @@ export default function AdminHeader({
             <span>—</span>
             <span className="text-[#20221F] font-bold">Management Portal</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-[#20221F] font-serif tracking-tight mt-0.5">
-            Admin Dashboard
-          </h1>
+
         </div>
 
         {/* Action Toolbar */}

@@ -75,6 +75,22 @@ const playerSchema = new mongoose.Schema({
     type: String,
     default: null
   },
+  goals: {
+    type: Number,
+    default: 0
+  },
+  assists: {
+    type: Number,
+    default: 0
+  },
+  matches: {
+    type: Number,
+    default: 0
+  },
+  rating: {
+    type: Number,
+    default: 0
+  },
   status: {
     type: String,
     enum: ['Active', 'Inactive'],

@@ -81,11 +81,11 @@ export default function SquadView() {
         {/* Quick Stats Badges */}
         <div className="flex items-center gap-3 z-10">
           <div className="px-4 py-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 text-center">
-            <div className="text-xl font-black text-[#BEF264] font-serif">{teams.length || 2}</div>
+            <div className="text-xl font-black text-[#BEF264] font-serif">{teams.length}</div>
             <div className="text-[10px] text-[#A1A19A] font-extrabold uppercase">Teams</div>
           </div>
           <div className="px-4 py-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 text-center">
-            <div className="text-xl font-black text-white font-serif">{players.length || 6}</div>
+            <div className="text-xl font-black text-white font-serif">{players.length}</div>
             <div className="text-[10px] text-[#A1A19A] font-extrabold uppercase">Players</div>
           </div>
         </div>

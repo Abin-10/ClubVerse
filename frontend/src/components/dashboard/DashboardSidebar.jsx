@@ -21,6 +21,7 @@ export default function DashboardSidebar({ activeTab, setActiveTab }) {
     { id: 'overview', icon: Home, label: 'Overview' },
     { id: 'squad', icon: Shield, label: 'Club Roster & Players' },
     { id: 'booktickets', icon: TicketCheck, label: 'Book Tickets' },
+    { id: 'mytickets', icon: Ticket, label: 'My Tickets & Details' },
     { id: 'community', icon: Users, label: 'Fan Club' },
   ];
 

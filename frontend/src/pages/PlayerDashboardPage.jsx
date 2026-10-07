@@ -30,41 +30,51 @@ export default function PlayerDashboardPage() {
     profile_image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&auto=format&fit=crop&q=80'
   });
 
-  // Fetch this player's DB record by email
+  const [fixtures, setFixtures] = useState([]);
+
+  // Fetch this player's DB record by email and DB fixtures
   useEffect(() => {
     const email = authUser?.email;
-    if (!email) return;
+    if (email) {
+      fetch(`http://localhost:5000/api/player/profile/${encodeURIComponent(email)}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.full_name) {
+            // Merge DB data over auth data — DB is the source of truth for player fields
+            setCurrentUser((prev) => ({
+              ...prev,
+              name: data.full_name,
+              full_name: data.full_name,
+              email: data.email || prev.email,
+              position: data.position || prev.position,
+              jersey_number: data.jersey_number ?? prev.jersey_number,
+              goals: data.goals ?? prev.goals,
+              assists: data.assists ?? prev.assists,
+              rating: data.rating ?? prev.rating,
+              nationality: data.nationality || prev.nationality,
+              preferred_foot: data.preferred_foot || 'Left',
+              height: data.height || '178 cm',
+              weight: data.weight || '72 kg',
+              contract_term: data.contract_term || 'June 2029',
+              role_access: data.role_access || 'First Team Professional Player',
+              market_value: data.market_value || '€120M',
+              medical_clearance: data.medical_clearance || '100% Match Fit',
+              bio: data.bio || 'Passionate ClubVerse VIP Supporter ⚽',
+              profile_image: data.profile_image || prev.profile_image,
+              date_of_birth: data.date_of_birth || prev.date_of_birth,
+              phone: data.phone || prev.phone,
+              status: data.status || prev.status,
+              playerId: data.id
+            }));
+          }
+        })
+        .catch((err) => console.warn('Player profile fetch:', err.message));
+    }
 
-    fetch(`http://localhost:5000/api/player/profile/${encodeURIComponent(email)}`)
+    fetch('http://localhost:5000/api/fixtures')
       .then((res) => res.json())
-      .then((data) => {
-        if (data.full_name) {
-          // Merge DB data over auth data — DB is the source of truth for player fields
-          setCurrentUser((prev) => ({
-            ...prev,
-            name: data.full_name,
-            full_name: data.full_name,
-            email: data.email || prev.email,
-            position: data.position || prev.position,
-            jersey_number: data.jersey_number ?? prev.jersey_number,
-            nationality: data.nationality || prev.nationality,
-            preferred_foot: data.preferred_foot || 'Left',
-            height: data.height || '178 cm',
-            weight: data.weight || '72 kg',
-            contract_term: data.contract_term || 'June 2029',
-            role_access: data.role_access || 'First Team Professional Player',
-            market_value: data.market_value || '€120M',
-            medical_clearance: data.medical_clearance || '100% Match Fit',
-            bio: data.bio || 'Passionate ClubVerse VIP Supporter ⚽',
-            profile_image: data.profile_image || prev.profile_image,
-            date_of_birth: data.date_of_birth || prev.date_of_birth,
-            phone: data.phone || prev.phone,
-            status: data.status || prev.status,
-            playerId: data.id
-          }));
-        }
-      })
-      .catch((err) => console.warn('Player profile fetch:', err.message));
+      .then((data) => { if (Array.isArray(data)) setFixtures(data); })
+      .catch((err) => console.warn('Fixtures fetch:', err.message));
   }, []);
 
   const triggerToast = (msg) => {
@@ -103,6 +113,8 @@ export default function PlayerDashboardPage() {
                 exit={{ opacity: 0, y: -10 }}
               >
                 <PlayerOverviewView 
+                  currentUser={currentUser}
+                  fixtures={fixtures}
                   onNavigateToTab={(tab) => setActiveTab(tab)}
                 />
               </motion.div>
@@ -147,7 +159,10 @@ export default function PlayerDashboardPage() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
               >
-                <PlayerPerformanceView />
+                <PlayerPerformanceView 
+                  currentUser={currentUser}
+                  fixtures={fixtures}
+                />
               </motion.div>
             )}
 
@@ -161,6 +176,7 @@ export default function PlayerDashboardPage() {
               >
                 <PlayerMatchesView 
                   searchQuery={searchQuery}
+                  fixtures={fixtures}
                 />
               </motion.div>
             )}

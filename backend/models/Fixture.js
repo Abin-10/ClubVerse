@@ -1,5 +1,29 @@
 import mongoose from 'mongoose';
 
+const playerPerformanceSubSchema = new mongoose.Schema({
+  player_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Player'
+  },
+  player_name: String,
+  jersey_number: Number,
+  position: String,
+  rating: {
+    type: Number,
+    min: 0,
+    max: 10,
+    default: null
+  },
+  goals: {
+    type: Number,
+    default: 0
+  },
+  assists: {
+    type: Number,
+    default: 0
+  }
+}, { _id: false });
+
 const fixtureSchema = new mongoose.Schema({
   home_team: {
     type: mongoose.Schema.Types.ObjectId,
@@ -55,6 +79,7 @@ const fixtureSchema = new mongoose.Schema({
     type: String,
     default: 'Roster Finalized'
   },
+  player_performances: [playerPerformanceSubSchema],
   created_at: {
     type: Date,
     default: Date.now
