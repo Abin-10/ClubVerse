@@ -127,6 +127,14 @@ app.use((req, res, next) => {
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
+// Root & Health Check Endpoints
+app.get('/', (req, res) => {
+  res.json({ status: 'ok', message: 'ClubVerse Express Backend API is Live!' });
+});
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'healthy', timestamp: new Date() });
+});
+
 // Seed Admin Account Helper
 const seedAdminUser = async () => {
   try {
