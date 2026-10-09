@@ -31,8 +31,8 @@ export default function CoachMatchesView({ searchQuery = '' }) {
       setLoading(true);
       setError(null);
       const [fRes, tRes] = await Promise.all([
-        fetch('http://localhost:5000/api/fixtures'),
-        fetch('http://localhost:5000/api/teams')
+        fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/fixtures` ),
+        fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/teams` )
       ]);
 
       if (fRes.ok) {
@@ -61,7 +61,7 @@ export default function CoachMatchesView({ searchQuery = '' }) {
   const handleGenerateSeason = async () => {
     try {
       setGenerating(true);
-      const res = await fetch('http://localhost:5000/api/fixtures/generate-league', {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/fixtures/generate-league` , {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });

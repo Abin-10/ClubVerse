@@ -9,7 +9,7 @@ import FixtureModal from './FixtureModal';
 import DeleteConfirmModal from './DeleteConfirmModal';
 import { formatTimeTo12Hour } from '../../utils/teamUtils';
 
-const API = 'http://localhost:5000/api';
+const API = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api` ;
 
 const getTeamLogo = (team) => {
   if (team?.logo_url) return team.logo_url;

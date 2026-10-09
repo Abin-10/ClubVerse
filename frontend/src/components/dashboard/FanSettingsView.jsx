@@ -106,7 +106,7 @@ export default function FanSettingsView({ currentUser, onUpdateUserData, trigger
 
         if (stored.email) {
           try {
-            await fetch('http://localhost:5000/api/user/profile', {
+            await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/user/profile` , {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -136,7 +136,7 @@ export default function FanSettingsView({ currentUser, onUpdateUserData, trigger
 
     if (stored.email) {
       try {
-        await fetch('http://localhost:5000/api/user/profile', {
+        await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/user/profile` , {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -170,7 +170,7 @@ export default function FanSettingsView({ currentUser, onUpdateUserData, trigger
         payload.favorite_player = favoritePlayer;
       }
 
-      const response = await fetch('http://localhost:5000/api/user/profile', {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/user/profile` , {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -238,7 +238,7 @@ export default function FanSettingsView({ currentUser, onUpdateUserData, trigger
     }
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/change-password', {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/auth/change-password` , {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

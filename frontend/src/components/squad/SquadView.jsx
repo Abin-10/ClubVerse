@@ -17,8 +17,8 @@ export default function SquadView() {
     setIsLoading(true);
     try {
       const [teamsRes, playersRes] = await Promise.all([
-        fetch('http://localhost:5000/api/teams'),
-        fetch('http://localhost:5000/api/players')
+        fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/teams` ),
+        fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/players` )
       ]);
 
       if (teamsRes.ok) {

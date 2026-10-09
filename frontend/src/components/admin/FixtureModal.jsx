@@ -50,8 +50,8 @@ export default function FixtureModal({ isOpen, onClose, onSave, fixtureToEdit, t
     const fetchData = async () => {
       try {
         const [stadiumRes, playerRes] = await Promise.all([
-          fetch('http://localhost:5000/api/stadiums'),
-          fetch('http://localhost:5000/api/players')
+          fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/stadiums` ),
+          fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/players` )
         ]);
 
         if (stadiumRes.ok) {

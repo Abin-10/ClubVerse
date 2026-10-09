@@ -57,7 +57,7 @@ export default function CoachTrainingView({
   const fetchPlayers = async () => {
     try {
       setLoadingPlayers(true);
-      const res = await fetch('http://localhost:5000/api/players');
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/players` );
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {

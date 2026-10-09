@@ -32,7 +32,7 @@ export default function CoachNewsView({ triggerToast }) {
     try {
       setLoading(true);
       setError(null);
-      const res = await fetch('http://localhost:5000/api/announcements');
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/announcements` );
       if (res.ok) {
         const data = await res.json();
         if (data.announcements && Array.isArray(data.announcements)) {
@@ -62,7 +62,7 @@ export default function CoachNewsView({ triggerToast }) {
 
     try {
       setSubmitting(true);
-      const res = await fetch('http://localhost:5000/api/announcements', {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/announcements` , {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -91,7 +91,7 @@ export default function CoachNewsView({ triggerToast }) {
   const handleDeleteAnnouncement = async (id) => {
     if (!window.confirm('Are you sure you want to delete this announcement?')) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/announcements/${id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/announcements/${id}`, {
         method: 'DELETE'
       });
       const data = await res.json();

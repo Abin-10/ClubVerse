@@ -36,7 +36,7 @@ export default function PlayerDashboardPage() {
   useEffect(() => {
     const email = authUser?.email;
     if (email) {
-      fetch(`http://localhost:5000/api/player/profile/${encodeURIComponent(email)}`)
+      fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/player/profile/${encodeURIComponent(email)}`)
         .then((res) => res.json())
         .then((data) => {
           if (data.full_name) {
@@ -71,7 +71,7 @@ export default function PlayerDashboardPage() {
         .catch((err) => console.warn('Player profile fetch:', err.message));
     }
 
-    fetch('http://localhost:5000/api/fixtures')
+    fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/fixtures` )
       .then((res) => res.json())
       .then((data) => { if (Array.isArray(data)) setFixtures(data); })
       .catch((err) => console.warn('Fixtures fetch:', err.message));

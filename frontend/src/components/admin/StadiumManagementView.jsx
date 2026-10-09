@@ -57,7 +57,7 @@ export default function StadiumManagementView({ triggerToast }) {
   const fetchStadiums = async () => {
     try {
       setLoadingStadiums(true);
-      const res = await fetch('http://localhost:5000/api/stadiums');
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/stadiums` );
       if (res.ok) {
         const data = await res.json();
         if (data.stadiums) setStadiums(data.stadiums);
@@ -74,8 +74,8 @@ export default function StadiumManagementView({ triggerToast }) {
     try {
       setLoadingBookings(true);
       const [bookingsRes, ticketsRes] = await Promise.all([
-        fetch('http://localhost:5000/api/stadium-bookings'),
-        fetch('http://localhost:5000/api/admin/tickets')
+        fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/stadium-bookings` ),
+        fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/admin/tickets` )
       ]);
 
       let bList = [];
@@ -202,8 +202,8 @@ export default function StadiumManagementView({ triggerToast }) {
     try {
       const isEdit = Boolean(stadiumData._id);
       const url = isEdit 
-        ? `http://localhost:5000/api/stadiums/${stadiumData._id}`
-        : 'http://localhost:5000/api/stadiums';
+        ? `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/stadiums/${stadiumData._id}`
+        : `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/stadiums` ;
       
       const method = isEdit ? 'PUT' : 'POST';
 
@@ -232,7 +232,7 @@ export default function StadiumManagementView({ triggerToast }) {
   const handleDeleteConfirm = async () => {
     if (!deleteTarget) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/stadiums/${deleteTarget._id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/stadiums/${deleteTarget._id}`, {
         method: 'DELETE'
       });
       if (res.ok) {
@@ -250,7 +250,7 @@ export default function StadiumManagementView({ triggerToast }) {
   const handleUpdateBookingStatus = async (bookingId, newStatus, itemType = 'stadium') => {
     try {
       if (itemType === 'ticket') {
-        const res = await fetch(`http://localhost:5000/api/tickets/${bookingId}/cancel`, {
+        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/tickets/${bookingId}/cancel`, {
           method: 'PUT'
         });
         if (res.ok) {
@@ -258,7 +258,7 @@ export default function StadiumManagementView({ triggerToast }) {
           if (triggerToast) triggerToast(`Ticket ${bookingId} updated in MongoDB.`);
         }
       } else {
-        const res = await fetch(`http://localhost:5000/api/stadium-bookings/${bookingId}/status`, {
+        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/stadium-bookings/${bookingId}/status`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ status: newStatus })

@@ -72,9 +72,9 @@ export default function AdminDashboardPage() {
     try {
       setLoading(true);
       const [statsRes, playersRes, coachesRes] = await Promise.all([
-        fetch('http://localhost:5000/api/admin/stats'),
-        fetch('http://localhost:5000/api/admin/players'),
-        fetch('http://localhost:5000/api/admin/coaches')
+        fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/admin/stats` ),
+        fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/admin/players` ),
+        fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/admin/coaches` )
       ]);
 
       if (statsRes.ok) {
@@ -101,7 +101,7 @@ export default function AdminDashboardPage() {
     const storedUser = JSON.parse(localStorage.getItem('clubverse_user') || 'null');
     const targetId = storedUser?.id || storedUser?._id || 'admin';
     try {
-      const res = await fetch(`http://localhost:5000/api/user/profile/${targetId}`);
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/user/profile/${targetId}`);
       if (res.ok) {
         const data = await res.json();
         if (data.user) {
@@ -137,8 +137,8 @@ export default function AdminDashboardPage() {
     try {
       const isEdit = Boolean(playerData._id);
       const url = isEdit 
-        ? `http://localhost:5000/api/admin/players/${playerData._id}` 
-        : 'http://localhost:5000/api/admin/players';
+        ? `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/admin/players/${playerData._id}` 
+        : `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/admin/players` ;
 
       const method = isEdit ? 'PUT' : 'POST';
 
@@ -188,8 +188,8 @@ export default function AdminDashboardPage() {
     try {
       const isEdit = Boolean(coachData._id);
       const url = isEdit 
-        ? `http://localhost:5000/api/admin/coaches/${coachData._id}` 
-        : 'http://localhost:5000/api/admin/coaches';
+        ? `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/admin/coaches/${coachData._id}` 
+        : `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/admin/coaches` ;
 
       const method = isEdit ? 'PUT' : 'POST';
 
@@ -231,7 +231,7 @@ export default function AdminDashboardPage() {
 
     try {
       const endpoint = itemType === 'Player' ? 'players' : 'coaches';
-      const res = await fetch(`http://localhost:5000/api/admin/${endpoint}/${itemToDelete._id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/admin/${endpoint}/${itemToDelete._id}`, {
         method: 'DELETE'
       });
 

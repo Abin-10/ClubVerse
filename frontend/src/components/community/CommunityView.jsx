@@ -57,7 +57,7 @@ export default function CommunityView({ currentUser, triggerToast }) {
   const fetchPosts = async (silent = false) => {
     try {
       if (!silent) setLoading(true);
-      const res = await fetch('http://localhost:5000/api/community/posts');
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/community/posts` );
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data.posts)) {
@@ -143,7 +143,7 @@ export default function CommunityView({ currentUser, triggerToast }) {
 
     try {
       setIsSubmitting(true);
-      const res = await fetch('http://localhost:5000/api/community/posts', {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/community/posts` , {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -185,7 +185,7 @@ export default function CommunityView({ currentUser, triggerToast }) {
     }));
 
     try {
-      await fetch(`http://localhost:5000/api/community/posts/${postId}/like`, {
+      await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/community/posts/${postId}/like`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_id: userId })
@@ -218,7 +218,7 @@ export default function CommunityView({ currentUser, triggerToast }) {
     setCommentInputs(prev => ({ ...prev, [postId]: '' }));
 
     try {
-      await fetch(`http://localhost:5000/api/community/posts/${postId}/comment`, {
+      await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/community/posts/${postId}/comment`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -260,7 +260,7 @@ export default function CommunityView({ currentUser, triggerToast }) {
     }));
 
     try {
-      await fetch(`http://localhost:5000/api/community/posts/${postId}/vote`, {
+      await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/community/posts/${postId}/vote`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ option_id: optionId, user_id: userId })
@@ -275,7 +275,7 @@ export default function CommunityView({ currentUser, triggerToast }) {
     setPosts(prev => prev.filter(p => p._id !== postId));
 
     try {
-      await fetch(`http://localhost:5000/api/community/posts/${postId}`, {
+      await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/community/posts/${postId}`, {
         method: 'DELETE'
       });
       triggerToast?.('Message deleted.');

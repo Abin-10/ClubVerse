@@ -53,8 +53,8 @@ export default function StadiumBookingView({ currentUser, triggerToast }) {
       try {
         const userId = currentUser?.id || currentUser?._id || '';
         const url = userId 
-          ? `http://localhost:5000/api/stadium-bookings?user_id=${userId}` 
-          : 'http://localhost:5000/api/stadium-bookings';
+          ? `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/stadium-bookings?user_id=${userId}` 
+          : `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/stadium-bookings` ;
         
         const res = await fetch(url);
         if (res.ok) {
@@ -86,7 +86,7 @@ export default function StadiumBookingView({ currentUser, triggerToast }) {
   useEffect(() => {
     const fetchApiStadiums = async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/stadiums');
+        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/stadiums` );
         if (res.ok) {
           const data = await res.json();
           if (data.stadiums && data.stadiums.length > 0) {
@@ -138,7 +138,7 @@ export default function StadiumBookingView({ currentUser, triggerToast }) {
   const handleCancelBooking = async (bookingId) => {
     // Try updating backend API
     try {
-      await fetch(`http://localhost:5000/api/stadium-bookings/${bookingId}/cancel`, {
+      await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/stadium-bookings/${bookingId}/cancel`, {
         method: 'PATCH'
       });
     } catch (err) {

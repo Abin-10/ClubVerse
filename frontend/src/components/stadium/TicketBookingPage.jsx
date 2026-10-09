@@ -11,7 +11,7 @@ import RazorpayPaymentModal from './RazorpayPaymentModal';
 import FanTicketDetailsDashboard from './FanTicketDetailsDashboard';
 import { getTeamLogo, formatTimeTo12Hour, getBookingStatus, isPastFixture } from '../../utils/teamUtils';
 
-const API = 'http://localhost:5000/api';
+const API = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api` ;
 
 const DEFAULT_MOCK_FIXTURES = [
   {
