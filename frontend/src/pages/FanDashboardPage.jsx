@@ -58,7 +58,7 @@ export default function FanDashboardPage() {
       }
       const userId = storedUser?.id || storedUser?._id || 'guest';
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/fan/dashboard/${userId}`);
+        const res = await fetch(`${(import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000').replace(/\/+$/, '')}/api/fan/dashboard/${userId}`);
         if (res.ok) {
           const data = await res.json();
           if (data.success) {
@@ -84,7 +84,7 @@ export default function FanDashboardPage() {
   const handleWalletTopUp = async (amount) => {
     const userId = currentUser?.id || currentUser?._id;
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/fan/wallet/topup` , {
+      const res = await fetch(`${(import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000').replace(/\/+$/, '')}/api/fan/wallet/topup` , {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, amount })
@@ -109,7 +109,7 @@ export default function FanDashboardPage() {
   const handlePollVote = async (optionId, pollId) => {
     const userId = currentUser?.id || currentUser?._id;
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/fan/poll/vote` , {
+      const res = await fetch(`${(import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000').replace(/\/+$/, '')}/api/fan/poll/vote` , {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, pollId, optionId })

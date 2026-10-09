@@ -22,15 +22,14 @@ function getAllFiles(dir, fileList = []) {
 const files = getAllFiles(srcDir);
 let modifiedCount = 0;
 
+const SAFE_BASE = "(import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000').replace(/\\/+$/, '')";
+
 for (const file of files) {
   let content = fs.readFileSync(file, 'utf8');
-  if (content.includes('http://localhost:5000')) {
-    // Replace single quotes 'http://localhost:5000...' with template literal `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}...`
-    content = content.replace(/'http:\/\/localhost:5000([^']*)'/g, "`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}$1` ");
-    // Replace double quotes "http://localhost:5000..." with template literal `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}...`
-    content = content.replace(/"http:\/\/localhost:5000([^"]*)"/g, "`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}$1` ");
-    // Replace template literals `http://localhost:5000...` with `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}...`
-    content = content.replace(/`http:\/\/localhost:5000/g, "`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}");
+  if (content.includes('import.meta.env.VITE_API_BASE_URL') || content.includes('http://localhost:5000')) {
+    // Replace inline expressions to ensure safe trailing slash handling
+    content = content.replace(/\$\{import\.meta\.env\.VITE_API_BASE_URL \|\| 'http:\/\/localhost:5000'\}/g, `\${${SAFE_BASE}}`);
+    content = content.replace(/`http:\/\/localhost:5000/g, `\`\${${SAFE_BASE}}`);
     
     fs.writeFileSync(file, content, 'utf8');
     console.log(`Updated: ${path.relative(srcDir, file)}`);
@@ -38,4 +37,4 @@ for (const file of files) {
   }
 }
 
-console.log(`\n🎉 Successfully updated ${modifiedCount} files to use dynamic VITE_API_BASE_URL.`);
+console.log(`\n🎉 Successfully sanitized ${modifiedCount} files for safe URL joining.`);

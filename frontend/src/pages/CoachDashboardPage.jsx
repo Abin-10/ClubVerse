@@ -43,7 +43,7 @@ export default function CoachDashboardPage() {
     const email = authUser?.email;
     if (!email) return;
 
-    fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/coach/profile/${encodeURIComponent(email)}`)
+    fetch(`${(import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000').replace(/\/+$/, '')}/api/coach/profile/${encodeURIComponent(email)}`)
       .then((res) => res.json())
       .then((data) => {
         if (data.full_name) {
@@ -68,12 +68,12 @@ export default function CoachDashboardPage() {
 
   // Fetch squad players and fixtures from backend for Coach Dashboard
   useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/admin/players` )
+    fetch(`${(import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000').replace(/\/+$/, '')}/api/admin/players` )
       .then((res) => res.json())
       .then((data) => { if (Array.isArray(data)) setPlayers(data); })
       .catch((err) => console.warn('Squad fetch:', err.message));
 
-    fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/fixtures` )
+    fetch(`${(import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000').replace(/\/+$/, '')}/api/fixtures` )
       .then((res) => res.json())
       .then((data) => { if (Array.isArray(data)) setFixtures(data); })
       .catch((err) => console.warn('Fixtures fetch:', err.message));
